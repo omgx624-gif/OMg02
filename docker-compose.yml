@@ -1,0 +1,46 @@
+services:
+  web:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - path: .env
+        required: false
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py createcachetable &&
+             python manage.py seed_menu &&
+             python manage.py create_google_app --domain \"$${DJANGO_ALLOWED_HOSTS%%,*}\" &&
+             gunicorn myproject.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+    volumes:
+      # staticfiles ไม่ต้อง mount — เอาจาก image ที่ collectstatic ไว้แล้ว (อัปเดตตาม rebuild)
+      - django_media:/app/media
+      # DB อยู่นอก /app กัน volume กลบทับโค้ดใน image (ดู DJANGO_SQLITE_PATH)
+      - django_db:/data
+    environment:
+      # fail-fast: ไม่ตั้งคีย์ใน .env จะสั่ง up ไม่ได้เลย
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in .env (see .env.example)}
+      DJANGO_DEBUG: "false"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DJANGO_SQLITE_PATH: /data/db.sqlite3
+      DJANGO_SECURE: "1"
+      # กันทุก GET วิ่ง automation ซ้ำ (วินาที) — ดู myapp.automation.run_all
+      DJANGO_AUTOMATION_MIN_INTERVAL: "10"
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      # ตรวจผ่าน /healthz (HTTP + เช็ค DB จริง) — มี SECURE_REDIRECT_EXEMPT
+      # ให้เรียก HTTP ตรงถึง gunicorn ได้แม้เปิด DJANGO_SECURE=1
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      # boot นานเพราะรัน migrate + seed_menu + create_google_app ก่อน gunicorn
+      start_period: 60s
+    mem_limit: 512m
+    cpus: 1.0
+
+volumes:
+  django_media:
+  django_db:

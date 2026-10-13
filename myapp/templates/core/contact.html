@@ -1,0 +1,80 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ติดต่อสอบถาม - ร้านผัดกะเพรา{% endblock %}
+
+{% block extra_style %}
+<style>
+    .contact-map-inner { border: 0; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <div class="icon-circle mb-3">📞</div>
+    <h1 class="page-title h2">ติดต่อสอบถาม</h1>
+    <p class="text-muted mb-0">หิวเมื่อไหร่ก็ทักมาหาเรา 🍛</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-soft hover-lift h-100">
+            <div class="card-body text-center py-5 px-4">
+                <div class="icon-circle mb-3">📍</div>
+                <h5 class="fw-bold">ที่อยู่ร้าน</h5>
+                <p class="text-muted mb-0">{{ store.name|default:'ร้านอร่อยเกินเบอร์' }}<br>{{ store.address|default:'ถนนสายกะเพราพริกสด แขวงใจกลางเมือง เขตอร่อยจัด 10100' }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-soft hover-lift h-100">
+            <div class="card-body text-center py-5 px-4">
+                <div class="icon-circle mb-3">⏰</div>
+                <h5 class="fw-bold">เวลาเปิด-ปิด</h5>
+                <p class="text-muted mb-0">ทุกวัน 10:00 น. - 20:00 น.<br>(หยุดวันหวยออก)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-soft hover-lift h-100">
+            <div class="card-body text-center py-5 px-4">
+                <div class="icon-circle mb-3">📱</div>
+                <h5 class="fw-bold">โทรศัพท์ / LINE ID</h5>
+                <p class="text-muted mb-0">{{ store.phone|default:'089-XXX-XXXX' }}<br>LINE: @krapaorungrit</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-soft hover-lift h-100">
+            <div class="card-body text-center py-5 px-4">
+                <div class="icon-circle mb-3">🛵</div>
+                <h5 class="fw-bold">บริการจัดส่ง</h5>
+                <p class="text-muted mb-0">มีบริการเดลิเวอรี่ทุกแพลตฟอร์ม<br>หรือโทรสั่งล่วงหน้าแล้วมารับที่ร้าน</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-soft mt-4">
+    <div class="card-body p-3">
+        <h5 class="fw-bold text-center mb-3"><i class="bi bi-geo-alt-fill text-brand me-2"></i>ตำแหน่งร้านของเรา</h5>
+        <div class="ratio ratio-16x9 rounded-3 overflow-hidden">
+            <iframe class="contact-map-inner"
+                    title="แผนที่ตำแหน่งร้าน (Google Maps)"
+                    src="https://maps.google.com/maps?q={{ store.lat|default:16.4539 }},{{ store.lng|default:99.5123 }}&z=16&hl=th&output=embed"
+                    allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <div class="text-center mt-2">
+            <a class="btn btn-sm btn-outline-primary"
+               target="_blank" rel="noopener"
+               href="https://www.google.com/maps/search/?api=1&query={{ store.lat|default:16.4539 }},{{ store.lng|default:99.5123 }}">
+                <i class="bi bi-box-arrow-up-right me-1"></i>เปิดแผนที่เต็มจอใน Google Maps
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-warning d-flex align-items-center justify-content-center gap-2 my-5" role="alert">
+    <i class="bi bi-lightbulb-fill fs-5"></i>
+    <span>ต้องการสมัครงานหรือสั่งจัดเลี้ยง? ติดต่อสอบถามข้อมูลเพิ่มเติมได้ที่หน้าร้านทุกวัน!</span>
+</div>
+{% endblock %}

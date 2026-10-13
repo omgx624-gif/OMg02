@@ -1,0 +1,48 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ยืนยันการลบ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-soft text-center">
+            <div class="card-body p-5">
+                <div class="icon-circle icon-danger mb-3">⚠️</div>
+                <h4 class="fw-bold mb-3">ยืนยันการลบเมนู</h4>
+
+                {% if menu.image %}
+                <img src="{{ menu.image.url }}" alt="{{ menu.name }}" class="img-fluid rounded shadow-sm mb-3" style="max-height:200px;">
+                {% endif %}
+
+                <p class="mb-2">
+                    คุณต้องการลบเมนู
+                    <strong class="text-danger fs-4">"{{ menu.name }}"</strong>
+                    ใช่หรือไม่?
+                </p>
+
+                <div class="bg-light rounded-3 py-3 px-4 my-3 d-flex justify-content-center gap-3 flex-wrap small">
+                    <span>📂 {{ menu.get_category_display }}</span>
+                    <span>💰 ฿{{ menu.price }}</span>
+                </div>
+
+                <p class="text-muted small mb-4">
+                    <i class="bi bi-shield-exclamation"></i>
+                    เมื่อลบแล้วจะ<b>ไม่สามารถกู้คืนข้อมูลได้</b>
+                </p>
+
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{% url 'menu_list' %}" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-x-lg"></i> ยกเลิก
+                    </a>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger px-4 fw-bold">
+                            <i class="bi bi-trash"></i> ยืนยันลบ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

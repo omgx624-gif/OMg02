@@ -1,0 +1,144 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}หน้าจอครัว - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+<style>
+    body { background: #1c1917; }
+    .kds-header { background: #26221f; border-bottom: 3px solid #ff5e62; }
+    .kds-card {
+        background: #f5f1ec;
+        border-radius: 1.2rem;
+        padding: 1.25rem;
+        box-shadow: 0 8px 24px rgba(0,0,0,.45);
+        border-left: 6px solid #ff5e62;
+        transition: transform .15s ease;
+    }
+    .kds-card.ready { border-left-color: #198754; background: #fff; }
+    .kds-card .order-code { font-size: 1.6rem; font-weight: 700; }
+    .kds-card .item-row {
+        display: flex; justify-content: space-between; align-items: baseline;
+        padding: .5rem .75rem; background: #fff; border-radius: .8rem; margin-top: .5rem;
+    }
+    .kds-card .qty-badge {
+        min-width: 34px; height: 34px; border-radius: 10px;
+        background: #26221f; color: #fff; font-weight: 700;
+        display: inline-flex; align-items: center; justify-content: center;
+    }
+    .kds-advance-btn { font-size: 1.35rem; font-weight: 700; padding: .9rem 1rem; border-radius: 1rem; width: 100%; }
+    .kds-title { color: #ffc371; font-size: 1.1rem; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; }
+    .elapsed-tag {
+        font-size: .8rem; font-weight: 600; border-radius: 999px;
+        padding: .15rem .7rem; background: #fff3e6; color: #b3541e;
+    }
+    .elapsed-tag.warn { background: #ffe9e9; color: #c0392b; }
+    .elapsed-tag.over { background: #ffd4d4; color: #b00020; animation: blink 1s infinite; }
+    @keyframes blink { 50% { opacity: .5; } }
+    .board { min-height: 70vh; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="kds-header position-sticky top-0 z-3 py-3 mb-4" style="margin: -1rem -1rem 1.5rem;">
+    <div class="d-flex justify-content-between align-items-center px-3">
+        <h1 class="h4 fw-bold text-white mb-0"><i class="bi bi-fire text-danger"></i> หน้าจอครัว (KDS)</h1>
+        <div class="d-flex gap-2 align-items-center">
+            <span class="badge bg-warning text-dark pulse-dot ms-1">สด: {{ cooking|length }} กำลังทำ</span>
+            <span class="badge bg-success">พร้อมเสิร์ฟ: {{ ready|length }}</span>
+            <a href="{% url 'dashboard' %}" class="btn btn-sm btn-outline-light">ออกจากจอครัว</a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 board">
+    <!-- คอลัมน์กำลังทำ -->
+    <div class="col-lg-7">
+        <div class="kds-title mb-3">🔥 กำลังทำ ({{ cooking|length }})</div>
+        {% if cooking %}
+        <div class="row g-3">
+            {% for order in cooking %}
+            <div class="col-md-6">
+                <div class="kds-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="order-code">{{ order.display_code }}</div>
+                            <div class="text-muted small fw-semibold">{{ order.table_display }}</div>
+                        </div>
+                        <span class="elapsed-tag {% if order.status_changed_at %}warn{% endif %}">
+                            {{ order.created_at|timesince }} ที่แล้ว
+                        </span>
+                    </div>
+                    {% for item in order.items.all %}
+                    <div class="item-row">
+                        <span class="fw-bold">
+                            <span class="qty-badge me-2">{{ item.quantity }}</span>
+                            {{ item.menu.name }}
+                            {% for a in item.addons.all %}<span class="badge bg-light text-dark border ms-1">+{{ a.name }}</span>{% endfor %}
+                        </span>
+                        {% if item.notes %}<small class="text-muted fst-italic ms-2">"{{ item.notes }}"</small>{% endif %}
+                    </div>
+                    {% endfor %}
+                    <form method="post" action="{% url 'kds_update_status' order.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        {% if order.status == 'open' %}
+                        <button type="submit" class="btn btn-warning kds-advance-btn">🍳 เริ่มทำ</button>
+                        {% else %}
+                        <button type="submit" class="btn btn-success kds-advance-btn">✓ เสร็จแล้ว</button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card shadow-soft text-center p-5 bg-secondary-subtle">
+            <div class="fs-1">😴</div>
+            <h5 class="fw-bold text-muted">ห้องครัวว่าง... รอออเดอร์ใหม่</h5>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- คอลัมน์พร้อมเสิร์ฟ -->
+    <div class="col-lg-5">
+        <div class="kds-title mb-3">✅ พร้อมเสิร์ฟ ({{ ready|length }})</div>
+        {% if ready %}
+        <div class="row g-3">
+            {% for order in ready %}
+            <div class="col-12">
+                <div class="kds-card ready">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="order-code text-success">{{ order.display_code }}</div>
+                            <div class="text-muted small fw-semibold">{{ order.table_display }}</div>
+                        </div>
+                        <span class="elapsed-tag">เสร็จเมื่อ {{ order.status_changed_at|timesince }} ที่แล้ว</span>
+                    </div>
+                    {% for item in order.items.all %}
+                    <div class="item-row">
+                        <span class="fw-bold"><span class="qty-badge me-2" style="background:#198754;">{{ item.quantity }}</span>{{ item.menu.name }}</span>
+                    </div>
+                    {% endfor %}
+                    <form method="post" action="{% url 'kds_update_status' order.pk %}" class="mt-3">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary kds-advance-btn">🍽️ เสิร์ฟแล้ว</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card shadow-soft text-center p-5 bg-secondary-subtle">
+            <div class="fs-1">☕</div>
+            <h5 class="fw-bold text-muted">ยังไม่มีอาหารที่พร้อมเสิร์ฟ</h5>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // รีเฟรชหน้าอัตโนมัติทุก 15 วินาที ให้จอครัวเป็นกระดานสด
+    setTimeout(() => window.location.reload(), 15000);
+</script>
+{% endblock %}

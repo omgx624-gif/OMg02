@@ -1,0 +1,423 @@
+{% extends 'core/basetemplate.html' %}
+{% load static %}
+
+{% block title %}โปรไฟล์ {{ target.username }} - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+    <style>
+        .profile-header {
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            border-radius: 1.2rem;
+            padding: 2.5rem 2rem;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-header.has-cover { background: none; }
+        .profile-header .cover-img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        .profile-header .cover-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,.25), rgba(0,0,0,.55));
+            z-index: 1;
+        }
+        .profile-header > *:not(.cover-img):not(.cover-overlay) { position: relative; z-index: 2; }
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            width: 200px; height: 200px;
+            background: rgba(255,255,255,.1);
+            border-radius: 50%;
+            top: -80px; right: -40px;
+        }
+        .profile-header::after {
+            content: '';
+            position: absolute;
+            width: 140px; height: 140px;
+            background: rgba(255,255,255,.08);
+            border-radius: 50%;
+            bottom: -50px; left: -30px;
+        }
+        .profile-avatar-lg {
+            width: 110px; height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid rgba(255,255,255,.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,.2);
+        }
+        .profile-avatar-placeholder {
+            width: 110px; height: 110px;
+            border-radius: 50%;
+            background: rgba(255,255,255,.25);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.8rem;
+            font-weight: 700;
+            border: 4px solid rgba(255,255,255,.5);
+            box-shadow: 0 8px 24px rgba(0,0,0,.2);
+        }
+        .cover-preview {
+            width: 100%;
+            max-height: 160px;
+            object-fit: cover;
+            border-radius: .8rem;
+            border: 3px solid #eee;
+        }
+        .cover-preview-placeholder {
+            width: 100%;
+            height: 120px;
+            border-radius: .8rem;
+            background: linear-gradient(135deg, #fff1e6, #ffddd5);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            border: 3px solid #eee;
+        }
+        .info-card .info-row {
+            display: flex;
+            align-items: center;
+            padding: .85rem 0;
+        }
+        .info-card .info-row + .info-row {
+            border-top: 1px dashed #eee;
+        }
+        .info-card .info-icon {
+            width: 42px; height: 42px;
+            border-radius: .7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-right: .85rem;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .stat-card .card-body {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-icon {
+            width: 52px; height: 52px;
+            border-radius: .8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        .stat-label {
+            font-size: .82rem;
+            color: #999;
+            margin: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">👤</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">โปรไฟล์ผู้ใช้</h1>
+            <p class="text-muted mb-0">ดูข้อมูลของ {{ target.username }}</p>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'user_update' target.pk %}" class="btn btn-gradient">
+            <i class="bi bi-pencil"></i> แก้ไขข้อมูล
+        </a>
+        <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> กลับ
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Header -->
+    <div class="col-12">
+        <div class="profile-header text-center {% if target.profile.cover %}has-cover{% endif %}">
+            {% if target.profile.cover %}
+            <img src="{{ target.profile.cover.url }}" alt="รูปปก" class="cover-img">
+            <div class="cover-overlay"></div>
+            {% endif %}
+            {% if target.profile.avatar %}
+            <img src="{{ target.profile.avatar.url }}" alt="รูปโปรไฟล์" class="profile-avatar-lg mx-auto mb-3">
+            {% else %}
+            <div class="profile-avatar-placeholder mx-auto mb-3">{{ target.username|first|upper }}</div>
+            {% endif %}
+            <h3 class="fw-bold mb-1">{{ target.username }}</h3>
+            <p class="mb-0 opacity-75">
+                {% if target.is_staff %}
+                    <i class="bi bi-shield-lock-fill"></i> ผู้ดูแลระบบ
+                {% else %}
+                    <i class="bi bi-person-fill"></i> สมาชิก
+                {% endif %}
+                {% if not target.is_active %}
+                    <span class="badge bg-danger ms-2">ปิดใช้งาน</span>
+                {% endif %}
+                · สมัครเมื่อ {{ target.date_joined|date:"d/m/Y" }}
+            </p>
+        </div>
+    </div>
+
+    <!-- ข้อมูลส่วนตัว -->
+    <div class="col-lg-7">
+        <div class="card shadow-soft info-card">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill text-brand"></i> ข้อมูลส่วนตัว</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="info-row">
+                    <div class="info-icon" style="background:#fff3e6;color:#ff9966;"><i class="bi bi-person-fill"></i></div>
+                    <div>
+                        <small class="text-muted d-block">ชื่อผู้ใช้</small>
+                        <strong>{{ target.username }}</strong>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-icon" style="background:#e8f5e9;color:#4caf50;"><i class="bi bi-person-badge"></i></div>
+                    <div>
+                        <small class="text-muted d-block">ชื่อ-นามสกุล</small>
+                        <strong>{{ target.first_name }} {{ target.last_name|default:'—' }}</strong>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-icon" style="background:#e3f2fd;color:#2196f3;"><i class="bi bi-envelope-fill"></i></div>
+                    <div>
+                        <small class="text-muted d-block">อีเมล</small>
+                        <strong>{{ target.email|default:'ยังไม่ได้ระบุ' }}</strong>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-icon" style="background:#fce4ec;color:#e91e63;"><i class="bi bi-calendar-fill"></i></div>
+                    <div>
+                        <small class="text-muted d-block">วันที่สมัคร</small>
+                        <strong>{{ target.date_joined|date:"d/m/Y H:i" }}</strong>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-icon" style="background:#f3e5f5;color:#9c27b0;"><i class="bi bi-clock-fill"></i></div>
+                    <div>
+                        <small class="text-muted d-block">เข้าสู่ระบบล่าสุด</small>
+                        <strong>{{ target.last_login|date:"d/m/Y H:i"|default:'ยังไม่เคยเข้าระบบ' }}</strong>
+                    </div>
+                </div>
+                <div class="info-row">
+                    <div class="info-icon" style="background:#fff3e6;color:#ff9966;"><i class="bi bi-person-badge-fill"></i></div>
+                    <div>
+                        <small class="text-muted d-block">สถานะสมาชิก</small>
+                        <strong>{{ target.profile.get_membership_status_display }}</strong>
+                    </div>
+                </div>
+                <div class="info-row mb-0">
+                    <div class="info-icon" style="background:#fff8e1;color:#f9a825;"><i class="bi bi-coin"></i></div>
+                    <div>
+                        <small class="text-muted d-block">คะแนนสะสม</small>
+                        <strong><span class="badge text-bg-warning">{{ target.profile.points }} คะแนน</span></strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- สถานะ & สถิติ -->
+    <div class="col-lg-5">
+        <!-- สถานะ -->
+        <div class="card shadow-soft mb-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shield-check text-brand"></i> สถานะบัญชี</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="d-flex flex-wrap gap-2">
+                    {% if target.profile.membership_status == 'vip' %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle p-2 fs-6">
+                        <i class="bi bi-star-fill me-1"></i> VIP
+                    </span>
+                    {% elif target.profile.membership_status == 'premium' %}
+                    <span class="badge text-bg-dark p-2 fs-6">
+                        <i class="bi bi-gem me-1"></i> พรีเมียม
+                    </span>
+                    {% endif %}
+                    {% if target.is_staff %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle p-2 fs-6">
+                        <i class="bi bi-shield-lock-fill me-1"></i> ผู้ดูแลระบบ
+                    </span>
+                    {% else %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle p-2 fs-6">
+                        <i class="bi bi-person-fill me-1"></i> สมาชิกทั่วไป
+                    </span>
+                    {% endif %}
+                    {% if target.is_active %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle p-2 fs-6">
+                        <i class="bi bi-check-circle-fill me-1"></i> ใช้งานได้
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle p-2 fs-6">
+                        <i class="bi bi-x-circle-fill me-1"></i> ปิดใช้งาน
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- สถิติ -->
+        <div class="card shadow-soft stat-card mb-4">
+            <div class="card-body">
+                <div class="stat-icon" style="background:#e3f2fd;color:#1976d2;">
+                    <i class="bi bi-receipt"></i>
+                </div>
+                <div>
+                    <div class="stat-value text-primary">{{ target.orders.count }}</div>
+                    <p class="stat-label">ออเดอร์ทั้งหมด</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- การกระทำ -->
+        <div class="card shadow-soft">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-gear text-brand"></i> การกระทำ</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2 d-grid gap-2">
+                <a href="{% url 'user_update' target.pk %}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> แก้ไขข้อมูลผู้ใช้
+                </a>
+                {% if target.pk != user.pk %}
+                <a href="{% url 'user_delete' target.pk %}" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i> ลบผู้ใช้
+                </a>
+                {% endif %}
+                <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> กลับไปรายชื่อผู้ใช้
+                </a>
+            </div>
+        </div>
+
+        <!-- อัปโหลดรูปโปรไฟล์ -->
+        <div class="card shadow-soft mt-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-camera-fill text-brand"></i> อัปโหลดรูปโปรไฟล์</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="avatar_submit" value="1">
+                    <div class="text-center mb-3">
+                        {% if target.profile.avatar %}
+                        <img src="{{ target.profile.avatar.url }}" alt="avatar" class="profile-avatar-lg mb-2" id="avatarPreview" style="width:100px;height:100px;">
+                        {% else %}
+                        <div class="profile-avatar-placeholder mb-2" style="width:100px;height:100px;font-size:2.2rem;" id="avatarPreviewPlaceholder">{{ target.username|first|upper }}</div>
+                        <img src="" alt="avatar" class="profile-avatar-lg mb-2 d-none" id="avatarPreview" style="width:100px;height:100px;">
+                        {% endif %}
+                    </div>
+                    {% with field=avatar_form.avatar %}
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                    <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                    {% endfor %}
+                    {% endwith %}
+                    <div class="form-text mb-3">รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 10 MB</div>
+                    <button type="submit" class="btn btn-gradient w-100">
+                        <i class="bi bi-upload"></i> อัปโหลดรูปโปรไฟล์
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- อัปโหลดรูปปกโปรไฟล์ -->
+        <div class="card shadow-soft mt-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-image-alt text-brand"></i> อัปโหลดรูปปก</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="cover_submit" value="1">
+                    <div class="text-center mb-3">
+                        {% if target.profile.cover %}
+                        <img src="{{ target.profile.cover.url }}" alt="cover" class="cover-preview mb-2" id="coverPreview">
+                        {% else %}
+                        <div class="cover-preview-placeholder mb-2" id="coverPreviewPlaceholder">🖼️</div>
+                        <img src="" alt="cover" class="cover-preview mb-2 d-none" id="coverPreview">
+                        {% endif %}
+                    </div>
+                    {% with field=cover_form.cover %}
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% for error in field.errors %}
+                    <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                    {% endfor %}
+                    {% endwith %}
+                    <div class="form-text mb-3">รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 10 MB</div>
+                    <button type="submit" class="btn btn-gradient w-100">
+                        <i class="bi bi-upload"></i> อัปโหลดรูปปก
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('id_avatar');
+    const preview = document.getElementById('avatarPreview');
+    const placeholder = document.getElementById('avatarPreviewPlaceholder');
+    if (input) {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.classList.remove('d-none');
+                    if (placeholder) placeholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    const coverInput = document.getElementById('id_cover');
+    const coverPreview = document.getElementById('coverPreview');
+    const coverPlaceholder = document.getElementById('coverPreviewPlaceholder');
+    if (coverInput) {
+        coverInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    coverPreview.src = ev.target.result;
+                    coverPreview.classList.remove('d-none');
+                    if (coverPlaceholder) coverPlaceholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

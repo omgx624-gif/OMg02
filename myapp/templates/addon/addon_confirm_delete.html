@@ -1,0 +1,41 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ยืนยันลบเครื่องเคียง - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-soft text-center">
+            <div class="card-body p-5">
+                <div class="icon-circle icon-danger mb-3">⚠️</div>
+                <h4 class="fw-bold mb-3">ยืนยันการลบเครื่องเคียง</h4>
+
+                <div class="bg-light rounded-3 py-3 px-4 my-3">
+                    <strong class="text-danger fs-4">{{ addon.name }}</strong>
+                    <div class="text-muted small mt-1">
+                        ราคา {{ addon.price }}฿ · {{ addon.is_active|yesno:"เปิดใช้งาน,ปิดใช้งาน" }}
+                    </div>
+                </div>
+
+                <p class="text-muted small mb-4">
+                    <i class="bi bi-shield-exclamation"></i>
+                    เมื่อลบแล้ว <b>{{ addon.name }}</b> จะถูกลบออกจากระบบ
+                    และ<b>ไม่สามารถกู้คืนได้</b>
+                </p>
+
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{% url 'addon_list' %}" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-x-lg"></i> ยกเลิก
+                    </a>
+                    <form method="post">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger px-4 fw-bold">
+                            <i class="bi bi-trash"></i> ยืนยันลบ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

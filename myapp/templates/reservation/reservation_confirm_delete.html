@@ -1,0 +1,36 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ลบการจอง - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="icon-circle icon-danger" style="width:56px;height:56px;font-size:1.5rem;">🗑️</div>
+            <div>
+                <h1 class="h3 fw-bold mb-0">ลบการจอง</h1>
+                <p class="text-muted mb-0">โปรดตรวจสอบให้แน่ใจก่อนลบ</p>
+            </div>
+        </div>
+
+        <div class="card shadow-soft">
+            <div class="card-body p-4 text-center">
+                <div class="fs-1 mb-3">⚠️</div>
+                <h4 class="fw-bold mb-3">
+                    ต้องการลบการจองของ <span class="text-brand">{{ reservation.customer_name }}</span> จริงไหม?
+                </h4>
+                <p class="text-muted mb-4">
+                    {{ reservation.party_size }} คน @ {{ reservation.reservation_date|date:"d/m/Y" }} {{ reservation.reservation_time|time:"H:i" }}
+                </p>
+                <form method="post" class="d-flex gap-2 justify-content-center">
+                    {% csrf_token %}
+                    <a href="{% url 'reservation_dashboard' %}" class="btn btn-outline-secondary px-4">ยกเลิก</a>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="bi bi-trash"></i> ยืนยันการลบ
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

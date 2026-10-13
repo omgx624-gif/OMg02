@@ -1,0 +1,73 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}จัดการหมวดหมู่ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">📂</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">จัดการหมวดหมู่</h1>
+            <p class="text-muted mb-0">เพิ่ม/แก้ไข/ลบหมวดหมู่เมนูอาหาร</p>
+        </div>
+    </div>
+    <a href="{% url 'category_create' %}" class="btn btn-gradient">
+        <i class="bi bi-plus-lg"></i> เพิ่มหมวดหมู่
+    </a>
+</div>
+
+{% if categories %}
+<div class="card shadow-soft">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>#</th>
+                    <th>ชื่อหมวดหมู่</th>
+                    <th>Slug</th>
+                    <th class="text-center">ลำดับ</th>
+                    <th class="text-center">สถานะ</th>
+                    <th class="text-center">จำนวนเมนู</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cat in categories %}
+                <tr>
+                    <td class="fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold">{{ cat.name }}</td>
+                    <td><code>{{ cat.slug }}</code></td>
+                    <td class="text-center">{{ cat.sort_order }}</td>
+                    <td class="text-center">
+                        {% if cat.is_active %}
+                        <span class="badge bg-success">เปิดใช้งาน</span>
+                        {% else %}
+                        <span class="badge bg-secondary">ปิดใช้งาน</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">{{ cat.menu_items.count }}</td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'category_update' cat.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> แก้ไข
+                        </a>
+                        <a href="{% url 'category_delete' cat.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> ลบ
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state card shadow-soft text-center">
+    <span class="emoji">📂</span>
+    <h4 class="fw-bold">ยังไม่มีหมวดหมู่</h4>
+    <p class="text-muted mb-3">กดปุ่มด้านบนเพื่อเพิ่มหมวดหมู่แรก</p>
+    <a href="{% url 'category_create' %}" class="btn btn-gradient">
+        <i class="bi bi-plus-lg"></i> เพิ่มหมวดหมู่แรก
+    </a>
+</div>
+{% endif %}
+{% endblock %}

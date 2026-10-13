@@ -1,0 +1,26 @@
+# ruff — linter/formatter สำหรับโปรเจกต์นี้
+# รัน: python -m ruff check .   (เพิ่ม --fix เพื่อแก้อัตโนมัติ)
+# รันแบบเดียวกับ CI ถ้ามี: python -m ruff format --check .
+
+target-version = "py314"
+line-length = 100
+
+extend-exclude = [
+    "myapp/migrations",
+    "staticfiles",
+    "media",
+    ".venv",
+]
+
+[lint]
+# พื้นฐาน: pyflakes (F) + pycodestyle ส่วนที่สำคัญ (E4/E7/E9) + เรียงลำดับ import (I)
+select = ["E4", "E7", "E9", "F", "I"]
+ignore = [
+    # myapp/views ใช้ pattern `from . import *` — F405 ทั้ง 700+ บรรทัดเป็นผล
+    # ข้างเคียงของ convention นี้ (ทุกชื่อถูก export จริงจาก myapp/views/__init__)
+    "F405",
+]
+
+[lint.per-file-ignores]
+# ไฟล์ test มีตัวแปร assign ไว้เพื่อให้ side effect (client.post ฯลฯ) เท่านั้น
+"myapp/tests.py" = ["F841"]

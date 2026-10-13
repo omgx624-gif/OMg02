@@ -1,0 +1,142 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}แดชบอร์ดไรเดอร์ - เดลิเวอร์รี่{% endblock %}
+
+{% block extra_style %}
+<style>
+    .rider-stat { border: none; border-radius: 1rem; }
+    .rider-stat .num { font-size: 1.7rem; font-weight: 700; line-height: 1.1; }
+    .rider-stat .lbl { font-size: .85rem; color: #999; }
+    .job-address { max-width: 300px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🏍️</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">แดชบอร์ดไรเดอร์</h1>
+            <p class="text-muted mb-0">
+                สวัสดี <strong>{{ user.first_name|default:user.username }}</strong> — งานที่รอรับทั้งหมด
+            </p>
+        </div>
+    </div>
+    <a href="{% url 'rider_my_jobs' %}" class="btn btn-primary btn-gradient">
+        <i class="bi bi-collection-fill me-1"></i> งานของฉัน
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2"><div class="card shadow-soft rider-stat h-100"><div class="card-body">
+        <div class="lbl"><i class="bi bi-hourglass-split text-warning"></i> รอรับงาน</div>
+        <div class="num text-warning">{{ counts.pending }}</div>
+    </div></div></div>
+    <div class="col-6 col-lg-2"><div class="card shadow-soft rider-stat h-100"><div class="card-body">
+        <div class="lbl"><i class="bi bi-hand-index-thumb text-primary"></i> รับแล้ว</div>
+        <div class="num text-primary">{{ counts.accepted }}</div>
+    </div></div></div>
+    <div class="col-6 col-lg-2"><div class="card shadow-soft rider-stat h-100"><div class="card-body">
+        <div class="lbl"><i class="bi bi-fire text-danger"></i> ไปรับอาหาร</div>
+        <div class="num text-danger">{{ counts.picking_up }}</div>
+    </div></div></div>
+    <div class="col-6 col-lg-2"><div class="card shadow-soft rider-stat h-100"><div class="card-body">
+        <div class="lbl"><i class="bi bi-scooter text-info"></i> กำลังจัดส่ง</div>
+        <div class="num text-info">{{ counts.out_for_delivery }}</div>
+    </div></div></div>
+    <div class="col-6 col-lg-2"><div class="card shadow-soft rider-stat h-100"><div class="card-body">
+        <div class="lbl"><i class="bi bi-check2-circle text-success"></i> ส่งแล้ว</div>
+        <div class="num text-success">{{ counts.delivered }}</div>
+    </div></div></div>
+</div>
+
+<div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
+    <h2 class="h5 fw-bold mb-0"><i class="bi bi-inbox-fill text-brand"></i> งานที่รอรับ</h2>
+    <span class="badge bg-warning text-dark" id="rider-avail-count" data-count="{{ available.count }}">{{ available.count }} รายการ</span>
+</div>
+
+{% if available %}
+<div class="row g-3">
+    {% for delivery in available %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card shadow-soft h-100 border-0">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <span class="fw-bold fs-5 text-brand">{{ delivery.order.display_code }}</span>
+                        <div class="small text-muted">{{ delivery.order.created_at|date:"d/m H:i" }} น.</div>
+                    </div>
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle">รอรับงาน</span>
+                </div>
+
+                <div class="small mb-2">
+                    <div class="fw-semibold"><i class="bi bi-person-fill text-brand"></i> {{ delivery.recipient_name }}</div>
+                    <div class="text-muted"><i class="bi bi-telephone-fill"></i> {{ delivery.phone }}</div>
+                </div>
+                <div class="alert alert-light border small py-2 mb-2 job-address">
+                    <i class="bi bi-geo-alt-fill text-brand"></i> {{ delivery.address|truncatechars:90 }}
+                </div>
+
+                <div class="d-flex flex-wrap gap-2 small mb-3">
+                    <span class="badge bg-light text-dark border">🧾 {{ delivery.order.item_count }} ชิ้น</span>
+                    <span class="badge bg-light text-dark border">💰 รวม {{ delivery.order.total_price }} ฿</span>
+                    <span class="badge bg-light text-dark border">🛵 ค่าส่ง {{ delivery.fee }} ฿</span>
+                </div>
+
+                {% if delivery.recipient_lat and delivery.recipient_lng %}
+                <a class="btn btn-sm btn-outline-primary mb-2"
+                   href="https://www.google.com/maps/dir/?api=1&destination={{ delivery.recipient_lat }},{{ delivery.recipient_lng }}"
+                   target="_blank" rel="noopener">
+                    <i class="bi bi-sign-turn-right-fill me-1"></i> นำทางไปส่ง
+                </a>
+                {% elif delivery.recipient_lat or delivery.recipient_lng %}
+                <div class="small text-muted mb-2"><i class="bi bi-info-circle"></i> รอพิกัดปลายทางจากร้าน</div>
+                {% endif %}
+
+                <form method="post" action="{% url 'rider_accept_job' delivery.pk %}" class="mt-auto">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success w-100 btn-gradient">
+                        <i class="bi bi-hand-index-thumb me-1"></i> รับงานนี้
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state card shadow-soft text-center">
+    <span class="emoji">🏍️</span>
+    <h4 class="fw-bold">ไม่มีงานรอรับในตอนนี้</h4>
+    <p class="text-muted mb-0">เมื่อมีออเดอร์เดลิเวอร์รี่ใหม่ ระบบจะแสดงงานที่นี่</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // แจ้งเตือนเบราว์เซอร์เมื่อมีงานใหม่ (เปรียบเทียบจาก localStorage)
+    const countEl = document.getElementById('rider-avail-count');
+    if (countEl && 'Notification' in window) {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        const current = parseInt(countEl.dataset.count || '0', 10);
+        const previous = parseInt(localStorage.getItem('rider_avail_count') || '0', 10);
+        if (current > previous && previous !== 0 && Notification.permission === 'granted') {
+            new Notification('🛵 มีงานใหม่รับงาน', {
+                body: 'ออเดอร์เดลิเวอร์รี่ใหม่ ' + current + ' รายการ รอคุณรับงาน',
+                icon: window.location.origin + '/static/img/scooter.png',
+            });
+        }
+        localStorage.setItem('rider_avail_count', String(current));
+    }
+
+    // รีเฟรชหน้าเองทุก 30 วินาที เพื่อรับงานใหม่ + ระบบจัดสรรอัตโนมัติ
+    window.setTimeout(function () {
+        window.location.reload();
+    }, 30000);
+});
+</script>
+{% endblock %}

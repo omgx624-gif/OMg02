@@ -1,0 +1,70 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ศูนย์การแจ้งเตือน - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🔔</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">ศูนย์การแจ้งเตือน</h1>
+            <p class="text-muted mb-0">การแจ้งเตือนจากระบบอัตโนมัติ</p>
+        </div>
+    </div>
+    <form method="post" action="{% url 'mark_notifications_read' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-check2-all me-1"></i> ทำเครื่องหมายอ่านแล้วทั้งหมด
+        </button>
+    </form>
+</div>
+
+<div class="card shadow-soft border-0">
+    <div class="card-body p-0">
+        {% if page_obj.object_list %}
+        <div class="list-group list-group-flush">
+            {% for n in page_obj %}
+            <div class="list-group-item d-flex align-items-start gap-3 py-3">
+                <span class="badge bg-{% if n.kind == 'order' %}warning{% elif n.kind == 'delivery' %}info{% elif n.kind == 'rider' %}success{% elif n.kind == 'report' %}secondary{% else %}dark{% endif %} mt-1">
+                    {{ n.get_kind_display }}
+                </span>
+                <div class="flex-grow-1">
+                    <div class="fw-bold">{{ n.title }}</div>
+                    <div class="small text-muted">{{ n.message|default:'-' }}</div>
+                    <div class="small text-muted mt-1">{{ n.created_at|date:'d/m/Y H:i' }}</div>
+                </div>
+                {% if n.link %}
+                <a href="{% url 'notification_redirect' n.pk %}" class="btn btn-sm btn-outline-secondary">
+                    เปิด <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state text-center text-muted py-5">
+            <span class="emoji">🔕</span>
+            <p class="mb-0">ไม่มีการแจ้งเตือน</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">ก่อนหน้า</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">ถัดไป</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}

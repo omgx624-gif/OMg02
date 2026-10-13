@@ -1,0 +1,89 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}จัดการคูปอง - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🎟️</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">จัดการคูปอง</h1>
+            <p class="text-muted mb-0">สร้างคูปองส่วนลดสำหรับโปรโมชั่นของคุณ</p>
+        </div>
+    </div>
+    <a href="{% url 'coupon_create' %}" class="btn btn-gradient">
+        <i class="bi bi-plus-lg"></i> สร้างคูปอง
+    </a>
+</div>
+
+{% if coupons %}
+<div class="card shadow-soft">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>รหัส</th>
+                    <th>ส่วนลด</th>
+                    <th class="text-center">ยอดขั้นต่ำ</th>
+                    <th class="text-center">ใช้แล้ว/ทั้งหมด</th>
+                    <th>วันที่ใช้ได้</th>
+                    <th class="text-center">สถานะ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for coupon in coupons %}
+                <tr>
+                    <td><span class="badge bg-dark fw-bold">{{ coupon.code }}</span></td>
+                    <td class="fw-bold text-brand">
+                        {% if coupon.discount_type == 'percent' %}{{ coupon.value }}%{% else %}฿{{ coupon.value }}{% endif %}
+                    </td>
+                    <td class="text-center">฿{{ coupon.min_order }}</td>
+                    <td class="text-center">
+                        {% if coupon.max_uses %}
+                        {{ coupon.used_count }}/{{ coupon.max_uses }}
+                        {% else %}
+                        {{ coupon.used_count }} / ∞
+                        {% endif %}
+                    </td>
+                    <td class="small">
+                        {{ coupon.valid_from|date:"d/m/Y" }}
+                        {% if coupon.valid_until %}→ {{ coupon.valid_until|date:"d/m/Y" }}{% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if coupon.is_active %}
+                        <span class="badge bg-success">เปิดใช้งาน</span>
+                        {% else %}
+                        <span class="badge bg-secondary">ปิด</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'coupon_update' coupon.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> แก้ไข
+                        </a>
+                        <a href="{% url 'coupon_delete' coupon.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> ลบ
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state card shadow-soft text-center">
+    <span class="emoji">🎟️</span>
+    <h4 class="fw-bold">ยังไม่มีคูปอง</h4>
+    <p class="text-muted mb-3">สร้างคูปองแรกเพื่อโปรโมชันร้านของคุณ</p>
+    <a href="{% url 'coupon_create' %}" class="btn btn-gradient">
+        <i class="bi bi-plus-lg"></i> สร้างคูปองแรก
+    </a>
+</div>
+{% endif %}
+
+<div class="alert alert-info mt-4 d-flex align-items-center gap-2">
+    <i class="bi bi-info-circle-fill fs-5"></i>
+    <span>ลูกค้าจะกรอกรหัสคูปองตอนสั่งอาหาร ระบบหักส่วนลดอัตโนมัติ (คำนวณจากยอดรวม + ค่าส่ง ก่อนหักส่วนลดสมาชิก)</span>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "socialaccount/base_entrance.html" %}
+{% load i18n %}
+{% block head_title %}กรอกข้อมูลให้ครบถ้วน{% endblock head_title %}
+{% block content %}
+    <h3 class="text-center">สมัครสมาชิกด้วยบัญชี {{ account.get_provider.name }}</h3>
+    <p class="text-muted text-center mt-2">
+        เกือบเสร็จแล้ว! กรุณากรอกข้อมูลด้านล่างเพื่อเปิดใช้งานบัญชีของคุณ
+    </p>
+
+    <form method="post" action="{% url 'socialaccount_signup' %}" class="mt-4" novalidate>
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="mb-3">
+                <label class="form-label">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}<ul class="errorlist">{{ field.errors }}</ul>{% endif %}
+            </div>
+        {% endfor %}
+        {{ redirect_field }}
+        <button type="submit" class="btn-restaurant">
+            <i class="bi bi-check-circle"></i> สมัครสมาชิก
+        </button>
+    </form>
+{% endblock content %}

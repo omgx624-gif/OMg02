@@ -1,0 +1,423 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}Dashboard - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+<style>
+    .stat-card { border: none; border-radius: 1rem; overflow: hidden; transition: all .2s; }
+    .stat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,.1) !important; }
+    .stat-icon { width: 56px; height: 56px; border-radius: .8rem; display: inline-flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+    .stat-value { font-size: 1.8rem; font-weight: 700; line-height: 1.1; }
+    .stat-label { font-size: .85rem; color: #999; margin: 0; }
+    .status-badge { font-size: .75rem; padding: .35em .7em; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">📊</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">Dashboard</h1>
+            <p class="text-muted mb-0">สรุปสถิตร้านอาหารวันนี้</p>
+        </div>
+    </div>
+</div>
+
+<!-- สถิติหลัก -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-soft stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background:#fff3e6;color:#ff9966;"><i class="bi bi-receipt"></i></div>
+                <div class="mt-2">
+                    <div class="stat-value text-warning">{{ orders_today_count }}</div>
+                    <p class="stat-label">ออเดอร์วันนี้</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-soft stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background:#e8f5e9;color:#4caf50;"><i class="bi bi-cash-stack"></i></div>
+                <div class="mt-2">
+                    <div class="stat-value text-success">{{ revenue_today|floatformat:0 }}</div>
+                    <p class="stat-label">รายได้วันนี้ (บาท)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-soft stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background:#e3f2fd;color:#1976d2;"><i class="bi bi-fire"></i></div>
+                <div class="mt-2">
+                    <div class="stat-value text-primary">{{ open_orders|add:preparing_orders|add:ready_orders|add:served_orders }}</div>
+                    <p class="stat-label">ออเดอร์ค้างอยู่</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-soft stat-card h-100">
+            <div class="card-body">
+                <div class="stat-icon" style="background:#f3e5f5;color:#9c27b0;"><i class="bi bi-egg-fried"></i></div>
+                <div class="mt-2">
+                    <div class="stat-value text-purple">{{ total_menus }}</div>
+                    <p class="stat-label">เมนูทั้งหมด</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- สถานะออเดอร์ปัจจุบัน -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-12">
+        <div class="card shadow-soft">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow text-brand"></i> ยอดขาย 7 วันล่าสุด</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <canvas id="salesChart" height="90"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- สถิติเดลิเวอร์รี่ -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-scooter text-brand"></i> สถิติเดลิเวอร์รี่</h5>
+                <a href="{% url 'delivery_dashboard' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-gear"></i> จัดการเดลิเวอร์รี่
+                </a>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#fff8e1;">
+                            <div class="fw-bold fs-2 text-warning">{{ delivery_waiting_count }}</div>
+                            <small class="text-muted">รอจัดส่ง</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#e1f5fe;">
+                            <div class="fw-bold fs-2 text-info">{{ delivery_out_count }}</div>
+                            <small class="text-muted">กำลังจัดส่ง</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#f1f8e9;">
+                            <div class="fw-bold fs-2 text-success">{{ delivery_today_count }}</div>
+                            <small class="text-muted">ส่งวันนี้</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#fce4ec;">
+                            <div class="fw-bold fs-2 text-danger">{{ delivery_no_info_count }}</div>
+                            <small class="text-muted">ยังไม่กรอกข้อมูล</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between border-top pt-3 mt-3 flex-wrap gap-2">
+                    <span class="text-muted">รายได้เดลิเวอร์รี่วันนี้ <strong class="text-success">{{ delivery_revenue_today|floatformat:0 }} บาท</strong></span>
+                    <span class="text-muted">สัปดาห์นี้ <strong>{{ delivery_revenue_week|floatformat:0 }} บาท</strong></span>
+                    <span class="text-muted">เดือนนี้ <strong>{{ delivery_revenue_month|floatformat:0 }} บาท</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-cash-stack text-brand"></i> ค่าส่ง vs อาหาร</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2 d-flex align-items-center justify-content-center">
+                <div style="width:100%;">
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">ออเดอร์เดลิเวอร์รี่วันนี้</span>
+                        <strong>{{ delivery_today_count }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">รายได้ (อาหาร+ค่าส่ง)</span>
+                        <strong class="text-success">{{ delivery_revenue_today|floatformat:0 }} บาท</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">สัปดาห์นี้</span>
+                        <strong>{{ delivery_week_count }} ออเดอร์</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- สถานะออเดอร์ปัจจุบัน -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-soft">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-brand"></i> สถานะออเดอร์ปัจจุบัน</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#fff8e1;">
+                            <div class="fw-bold fs-2 text-warning">{{ open_orders }}</div>
+                            <small class="text-muted">กำลังทาน</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#e1f5fe;">
+                            <div class="fw-bold fs-2 text-info">{{ preparing_orders }}</div>
+                            <small class="text-muted">กำลังเตรียม</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#e8f5e9;">
+                            <div class="fw-bold fs-2 text-primary">{{ ready_orders }}</div>
+                            <small class="text-muted">พร้อมเสิร์ฟ</small>
+                        </div>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <div class="text-center p-3 rounded-3" style="background:#f1f8e9;">
+                            <div class="fw-bold fs-2 text-success">{{ served_orders }}</div>
+                            <small class="text-muted">เสิร์ฟแล้ว</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <a href="{% url 'kitchen_display' %}" class="btn btn-sm btn-gradient">
+                        <i class="bi bi-fire"></i> เปิดหน้าจอครัว
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-trophy text-brand"></i> เมนูยอดนิยม</h5>
+                <a href="{% url 'menu_list' %}" class="btn btn-sm btn-outline-primary">ตั้งค่า</a>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                {% for item in popular_items %}
+                <div class="d-flex align-items-center justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-warning text-dark">{{ forloop.counter }}</span>
+                        <span class="fw-bold">{{ item.menu__name }}</span>
+                    </div>
+                    <span class="text-muted small">{{ item.total_ordered }} จาน</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center mb-0">ยังไม่มีข้อมูล</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- สต็อกวัตถุดิบ -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-box-seam text-brand"></i> สต็อกวัตถุดิบ</h5>
+                <a href="{% url 'inventory_dashboard' %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-arrow-right"></i> จัดการ
+                </a>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded-3" style="background:#fce4ec;">
+                            <div class="fw-bold fs-2 text-danger">{{ out_of_stock_count }}</div>
+                            <small class="text-muted">หมด</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded-3" style="background:#fff8e1;">
+                            <div class="fw-bold fs-2 text-warning">{{ low_stock_count }}</div>
+                            <small class="text-muted">ใกล้หมด</small>
+                        </div>
+                    </div>
+                </div>
+                {% if low_stock_list %}
+                <div class="list-group">
+                    {% for ing in low_stock_list %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center py-2 small border-0">
+                        <span class="fw-bold"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>{{ ing.name }}</span>
+                        <span class="badge {% if ing.stock_qty <= 0 %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                            เหลือ {{ ing.stock_qty }} {{ ing.unit }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-success text-center mb-0"><i class="bi bi-check-circle-fill"></i> สต็อกครบทุกอย่างดี</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-speedometer2 text-brand"></i> ภาพรวมเพิ่มเติม</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <a href="{% url 'reservation_dashboard' %}" class="d-flex justify-content-between align-items-center py-2 border-bottom text-decoration-none text-body">
+                    <span><i class="bi bi-calendar-check text-brand me-2"></i> การจองรอยืนยัน</span>
+                    <span class="badge bg-warning text-dark fs-6">{{ reservation_pending_count }}</span>
+                </a>
+                <a href="{% url 'menu_list' %}" class="d-flex justify-content-between align-items-center py-2 border-bottom text-decoration-none text-body">
+                    <span><i class="bi bi-star text-warning me-2"></i> รีวิวทั้งหมด</span>
+                    <span class="badge bg-secondary fs-6">{{ review_pending_count }}</span>
+                </a>
+                <a href="{% url 'coupon_list' %}" class="d-flex justify-content-between align-items-center py-2 text-decoration-none text-body">
+                    <span><i class="bi bi-ticket-perforated text-brand me-2"></i> คูปองที่เปิดใช้</span>
+                    <span class="badge bg-success fs-6">{{ coupon_count }}</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- สถิติสัปดาห์ & เดือน + ออเดอร์ล่าสุด -->
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar-week text-brand"></i> สถิติสัปดาห์นี้</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">ออเดอร์ทั้งหมด</span>
+                    <strong>{{ orders_week_count }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">รายได้</span>
+                    <strong class="text-success">{{ revenue_week|floatformat:0 }} บาท</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">เฉลี่ย/วัน</span>
+                    <strong>{{ avg_week_revenue|floatformat:0|default:"0" }} บาท</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar-month text-brand"></i> สถิติเดือนนี้</h5>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">ออเดอร์ทั้งหมด</span>
+                    <strong>{{ orders_month_count }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-bottom">
+                    <span class="text-muted">รายได้</span>
+                    <strong class="text-success">{{ revenue_month|floatformat:0 }} บาท</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span class="text-muted">ผู้ใช้ทั้งหมด</span>
+                    <strong>{{ total_users }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-soft h-100">
+            <div class="card-header bg-white border-bottom-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold mb-0"><i class="bi bi-clock text-brand"></i> ออเดอร์ล่าสุด</h5>
+                <a href="{% url 'order_list' %}" class="btn btn-sm btn-outline-primary">ดูทั้งหมด</a>
+            </div>
+            <div class="card-body px-4 pb-4 pt-2">
+                {% for order in recent_orders %}
+                <div class="d-flex align-items-center justify-content-between py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div>
+                        <span class="fw-bold">{{ order.display_code }}</span>
+                        {% if order.order_type == 'delivery' %}
+                        <small class="text-muted ms-1"><i class="bi bi-scooter"></i> เดลิเวอร์รี่</small>
+                        {% else %}
+                        <small class="text-muted ms-1">โต๊ะ {{ order.table_number }}</small>
+                        {% endif %}
+                    </div>
+                    <span class="badge status-badge
+                        {% if order.status == 'open' %}bg-warning text-dark
+                        {% elif order.status == 'preparing' %}bg-info text-white
+                        {% elif order.status == 'ready' %}bg-primary
+                        {% elif order.status == 'served' %}bg-success
+                        {% elif order.status == 'paid' %}bg-success-subtle text-success
+                        {% elif order.status == 'pending' %}bg-warning-subtle text-warning
+                        {% elif order.status == 'confirmed' %}bg-info-subtle text-info
+                        {% elif order.status == 'completed' %}bg-primary-subtle text-primary
+                        {% elif order.status == 'refunded' %}bg-danger-subtle text-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center mb-0">ยังไม่มีออเดอร์</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    var canvas = document.getElementById('salesChart');
+    if (!canvas) return;
+    var labels = {{ sales_labels|safe }};
+    var values = {{ sales_values|safe }};
+
+    var ctx = canvas.getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'ยอดขาย (บาท)',
+                data: values,
+                borderColor: '#ff5e62',
+                backgroundColor: 'rgba(255, 153, 102, .18)',
+                fill: true,
+                tension: .35,
+                pointBackgroundColor: '#ff5e62',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#26221f',
+                    callbacks: {
+                        label: function (c) { return c.parsed.y.toLocaleString() + ' บาท'; }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: '#f3ede7' },
+                    ticks: { callback: function (v) { return v.toLocaleString(); } }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}

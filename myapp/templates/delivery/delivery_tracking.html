@@ -1,0 +1,177 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ติดตามออเดอร์เดลิเวอร์รี่ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+<style>
+    .timeline { list-style: none; padding-left: 0; position: relative; }
+    .timeline::before {
+        content: ""; position: absolute; left: 20px; top: 8px; bottom: 8px;
+        width: 2px; background: #e9ecef;
+    }
+    .timeline li { position: relative; padding-left: 52px; padding-bottom: 1.25rem; }
+    .timeline li:last-child { padding-bottom: 0; }
+    .timeline .dot {
+        position: absolute; left: 12px; width: 18px; height: 18px;
+        border-radius: 50%; background: #e9ecef; border: 3px solid #fff;
+        box-shadow: 0 0 0 2px #dee2e6;
+    }
+    .timeline li.done .dot { background: #20c997; box-shadow: 0 0 0 2px #20c997; }
+    .timeline li.active .dot { background: #ff3d7f; box-shadow: 0 0 0 3px #ff3d7f; animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 3px rgba(255,61,127,.4);} 50% { box-shadow: 0 0 0 6px rgba(255,61,127,.2);} }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🔍</div>
+    <div>
+        <h1 class="h3 fw-bold mb-0">ติดตามออเดอร์เดลิเวอร์รี่</h1>
+        <p class="text-muted mb-0">กรอกรหัสออเดอร์ (เช่น #001) เพื่อตรวจสอบสถานะการจัดส่ง</p>
+    </div>
+</div>
+
+<div class="card shadow-soft mb-4">
+    <div class="card-body">
+        <form method="get" class="d-flex gap-2 flex-wrap">
+            <div class="input-group" style="max-width:360px;">
+                <span class="input-group-text bg-white"><i class="bi bi-qr-code"></i></span>
+                <input type="text" name="code" class="form-control"
+                       placeholder="กรอกรหัสออเดอร์ เช่น #001" value="{{ code }}">
+            </div>
+            <button type="submit" class="btn btn-primary btn-gradient">
+                <i class="bi bi-search"></i> ค้นหา
+            </button>
+            {% if delivery %}
+            <a href="{% url 'delivery_home' %}" class="btn btn-outline-secondary">ล้าง</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if code and not delivery and not rate_limited %}
+<div class="alert alert-warning d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    ไม่พบออเดอร์เดลิเวอร์รี่รหัส "{{ code }}" กรุณาตรวจสอบรหัสอีกครั้ง
+</div>
+{% endif %}
+
+{% if delivery %}
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card shadow-soft h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">
+                        <i class="bi bi-bag-check-fill text-brand"></i>
+                        ออเดอร์ {{ delivery.order.display_code }}
+                    </h5>
+                    <span class="badge {% if delivery.status == 'delivered' %}bg-success{% elif delivery.status == 'cancelled' %}bg-secondary{% elif delivery.status == 'out_for_delivery' %}bg-info{% else %}bg-warning text-dark{% endif %} fs-6">
+                        {{ delivery.get_status_display }}
+                    </span>
+                </div>
+                <div class="small">
+                    {% if can_view_details %}
+                    <div class="d-flex gap-2 mb-1">
+                        <i class="bi bi-person-fill text-brand"></i>
+                        <span><strong>{{ delivery.recipient_name }}</strong></span>
+                    </div>
+                    <div class="d-flex gap-2 mb-1">
+                        <i class="bi bi-telephone-fill text-brand"></i>
+                        <span>{{ delivery.phone }}</span>
+                    </div>
+                    <div class="d-flex gap-2 mb-1">
+                        <i class="bi bi-geo-alt-fill text-brand"></i>
+                        <span>{{ delivery.address|linebreaksbr }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex gap-2 mb-1">
+                        <i class="bi bi-cash-coin text-brand"></i>
+                        <span>ค่าส่ง <strong class="text-success">{{ delivery.fee }} บาท</strong></span>
+                    </div>
+                    {% if delivery.assigned_rider %}
+                    <div class="d-flex gap-2 mb-1">
+                        <i class="bi bi-person-wheelchair text-brand"></i>
+                        <span>ไรเดอร์: {{ delivery.assigned_rider.first_name|default:delivery.assigned_rider.username }}</span>
+                    </div>
+                    {% elif delivery.rider_name %}
+                    <div class="d-flex gap-2 mb-1">
+                        <i class="bi bi-person-wheelchair text-brand"></i>
+                        <span>ไรเดอร์: {{ delivery.rider_name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if can_view_details %}
+                {% if delivery.recipient_lat and delivery.recipient_lng %}
+                <a class="btn btn-outline-primary w-100 mt-3"
+                   href="https://www.google.com/maps/dir/?api=1&destination={{ delivery.recipient_lat }},{{ delivery.recipient_lng }}"
+                   target="_blank" rel="noopener">
+                    <i class="bi bi-sign-turn-right-fill me-1"></i> เปิดนำทาง (Google Maps)
+                </a>
+                {% else %}
+                <a class="btn btn-outline-primary w-100 mt-3"
+                   href="https://www.google.com/maps/search/?api=1&query={{ delivery.address|urlencode }}"
+                   target="_blank" rel="noopener">
+                    <i class="bi bi-geo-alt-fill me-1"></i> เปิดพิกัดที่อยู่
+                </a>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info small mt-3 mb-0">
+                    <i class="bi bi-shield-lock-fill"></i>
+                    เข้าสู่ระบบด้วยบัญชีของคุณเพื่อดูชื่อ-เบอร์-ที่อยู่ผู้รับและปุ่มนำทาง
+                    (เฉพาะผู้สั่ง พนักงาน และไรเดอร์ที่รับงานเท่านั้น)
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-soft h-100">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3"><i class="bi bi-activity"></i> สถานะการจัดส่ง</h5>
+                {% with s=delivery.status %}
+                <ul class="timeline">
+                    <li class="{% if s != 'cancelled' %}done{% endif %}">
+                        <span class="dot"></span>
+                        <strong>รอจัดส่ง</strong>
+                        <div class="small text-muted">ระบบได้รับออเดอร์แล้ว รอไรเดอร์รับงาน</div>
+                    </li>
+                    <li class="{% if s in 'accepted picking_up out_for_delivery delivered' %}done{% endif %}">
+                        <span class="dot"></span>
+                        <strong>ไรเดอร์รับงาน</strong>
+                        <div class="small text-muted">
+                            {% if delivery.accepted_at %}{{ delivery.accepted_at|date:"d/m/Y H:i" }}{% endif %}
+                        </div>
+                    </li>
+                    <li class="{% if s == 'out_for_delivery' %}active{% elif s == 'delivered' %}done{% endif %}">
+                        <span class="dot"></span>
+                        <strong>กำลังจัดส่ง</strong>
+                        <div class="small text-muted">ไรเดอร์กำลังนำอาหารออกไปส่งที่ปลายทาง</div>
+                    </li>
+                    <li class="{% if s == 'delivered' %}done{% endif %}">
+                        <span class="dot"></span>
+                        <strong>จัดส่งแล้ว</strong>
+                        <div class="small text-muted">
+                            {% if delivery.delivered_at %}{{ delivery.delivered_at|date:"d/m/Y H:i" }}{% endif %}
+                        </div>
+                    </li>
+                </ul>
+                {% if s == 'cancelled' %}
+                <div class="alert alert-secondary d-flex align-items-center gap-2 mb-0">
+                    <i class="bi bi-x-circle-fill"></i> ออเดอร์นี้ถูกยกเลิกการจัดส่ง
+                </div>
+                {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="text-center mt-4">
+    <a href="{% url 'delivery_home' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> กลับไปหน้าเดลิเวอร์รี่
+    </a>
+</div>
+{% endblock %}

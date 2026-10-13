@@ -1,0 +1,182 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}จัดการผู้ใช้ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+    <style>
+        .user-row:hover { background: #fffbf8; }
+        .user-avatar-cell {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #eee;
+        }
+        .user-avatar-placeholder {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">👥</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">จัดการผู้ใช้งาน</h1>
+            <p class="text-muted mb-0">มีสมาชิกทั้งหมด {{ total_users }} คน</p>
+        </div>
+    </div>
+    <a href="{% url 'user_create' %}" class="btn btn-gradient">
+        <i class="bi bi-person-plus"></i> เพิ่มพนักงานใหม่
+    </a>
+</div>
+
+<form method="get" action="{% url 'user_list' %}" class="card shadow-soft mb-4">
+    <div class="card-body p-3 p-md-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-8">
+                <label for="q" class="form-label"><i class="bi bi-search"></i> ค้นหาผู้ใช้</label>
+                <input type="text" name="q" id="q" value="{{ query }}" class="form-control"
+                       placeholder="ค้นหาจากชื่อผู้ใช้ ชื่อจริง นามสกุล หรืออีเมล...">
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn btn-gradient w-100">ค้นหา</button>
+                <a href="{% url 'user_list' %}" class="btn btn-outline-secondary" title="ล้างการค้นหา">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% if page_obj.object_list %}
+<div class="table-responsive card shadow-soft">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+            <tr>
+                <th>ผู้ใช้</th>
+                <th>อีเมล</th>
+                <th>สถานะ</th>
+                <th>วันที่สมัคร</th>
+                <th class="text-end">จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in page_obj.object_list %}
+            <tr class="user-row">
+                <td>
+                    <div class="d-flex align-items-center gap-3">
+                        {% if u.profile.avatar %}
+                        <img src="{{ u.profile.avatar.url }}" alt="avatar" class="user-avatar-cell">
+                        {% else %}
+                        <div class="user-avatar-placeholder">{{ u.username|first|upper }}</div>
+                        {% endif %}
+                        <div>
+                            <a href="{% url 'user_profile_detail' u.pk %}" class="fw-bold text-decoration-none text-dark d-block">
+                                {{ u.username }}
+                            </a>
+                            {% if u.first_name or u.last_name %}
+                            <small class="text-muted">{{ u.first_name }} {{ u.last_name }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td>{{ u.email|default:'—' }}</td>
+                <td>
+                    {% if u.profile.membership_status == 'vip' %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle mb-1">
+                        <i class="bi bi-star-fill"></i> VIP
+                    </span><br>
+                    {% elif u.profile.membership_status == 'premium' %}
+                    <span class="badge text-bg-dark mb-1">
+                        <i class="bi bi-gem"></i> พรีเมียม
+                    </span><br>
+                    {% elif not u.is_staff %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-1">
+                        <i class="bi bi-person-fill"></i> สมาชิกทั่วไป
+                    </span><br>
+                    {% endif %}
+                    {% if u.is_staff %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1">
+                        <i class="bi bi-shield-lock-fill"></i> ผู้ดูแล
+                    </span><br>
+                    {% endif %}
+                    {% if u.is_active %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                        <i class="bi bi-check-circle-fill"></i> ใช้งานได้
+                    </span>
+                    {% elif not u.is_staff %}
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle mb-1">
+                        <i class="bi bi-hourglass-split"></i> รออนุมัติ
+                    </span><br>
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                        <i class="bi bi-x-circle-fill"></i> ยังไม่ได้เปิดใช้งาน
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+                        <i class="bi bi-x-circle-fill"></i> ปิดใช้งาน
+                    </span>
+                    {% endif %}
+                </td>
+                <td><small class="text-muted">{{ u.date_joined|date:"d/m/Y" }}</small></td>
+                <td class="text-end text-nowrap">
+                    <a href="{% url 'user_profile_detail' u.pk %}" class="btn btn-sm btn-outline-info" title="ดูโปรไฟล์">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                    <a href="{% url 'user_update' u.pk %}" class="btn btn-sm btn-outline-primary" title="แก้ไข">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    {% if u.pk != user.pk %}
+                    <a href="{% url 'user_delete' u.pk %}" class="btn btn-sm btn-outline-danger" title="ลบ">
+                        <i class="bi bi-trash"></i>
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="แบ่งหน้า" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">&laquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state card shadow-soft text-center">
+    <span class="emoji">👥</span>
+    <h4 class="fw-bold">ไม่พบผู้ใช้ที่ค้นหา</h4>
+    <p class="text-muted mb-0">ลองเปลี่ยนคำค้นหา หรือเพิ่มผู้ใช้ใหม่เข้าระบบ</p>
+    <a href="{% url 'user_create' %}" class="btn btn-gradient mx-auto px-4 mt-3">
+        <i class="bi bi-person-plus"></i> เพิ่มพนักงานใหม่
+    </a>
+</div>
+{% endif %}
+{% endblock %}

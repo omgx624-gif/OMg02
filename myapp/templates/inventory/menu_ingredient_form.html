@@ -1,0 +1,61 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}{{ title }} - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🧾</div>
+                <div>
+                    <h1 class="h3 fw-bold mb-0">{{ title }}</h1>
+                    <p class="text-muted mb-0">ระบุปริมาณวัตถุดิบที่ใช้ต่อ 1 จาน</p>
+                </div>
+            </div>
+            <a href="{% url 'menu_ingredient_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> กลับ
+            </a>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span><strong>พบข้อผิดพลาด:</strong> กรุณาตรวจสอบช่องที่มีเครื่องหมายสีแดง</span>
+        </div>
+        {% endif %}
+
+        <div class="card shadow-soft">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% if recipe %}
+                    <p class="text-muted">
+                        กำลังแก้ไข: <strong>{{ recipe.menu.name }}</strong> ใช้ <strong>{{ recipe.ingredient.name }}</strong> {{ recipe.quantity }} {{ recipe.ingredient.unit }}
+                    </p>
+                    {% endif %}
+                    {% for field in form.visible_fields %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex gap-2 justify-content-end mt-4">
+                        <a href="{% url 'menu_ingredient_list' %}" class="btn btn-outline-secondary px-4">ยกเลิก</a>
+                        <button type="submit" class="btn btn-gradient px-4">
+                            <i class="bi bi-save"></i> บันทึก
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

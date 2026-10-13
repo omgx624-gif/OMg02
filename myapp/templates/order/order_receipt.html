@@ -1,0 +1,158 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ใบเสร็จ {{ order.display_code }} - ร้านผัดกะเพรารวมมิตร</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Prompt', sans-serif; }
+        body { background: #f3efe9; }
+        .paper {
+            max-width: 420px;
+            margin: 2rem auto;
+            background: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 12px 36px rgba(60, 40, 30, .15);
+            padding: 2rem 1.75rem;
+        }
+        .receipt-logo {
+            width: 60px; height: 60px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: #fff;
+            box-shadow: 0 6px 18px rgba(255, 94, 98, .4);
+            margin: 0 auto;
+        }
+        h1 { font-size: 1.2rem; font-weight: 700; }
+        .dashed { border-top: 2px dashed #e5ddd5; margin: 1rem 0; }
+        .row-line {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: .35rem 0;
+        }
+        .row-line .name { color: #555; font-weight: 500; }
+        .row-line .val { font-weight: 600; }
+        .qty-pill {
+            background: #f5f0eb; border-radius: 999px;
+            padding: .1rem .6rem; font-size: .8rem; color: #888; font-weight: 600;
+        }
+        .total-box {
+            background: linear-gradient(135deg, #fff5f0, #ffe8e0);
+            border-radius: .8rem; padding: .9rem 1rem;
+        }
+        .muted { color: #aaa; font-size: .82rem; }
+        .status-ok { color: #28a745; font-weight: 600; }
+        .toolbar {
+            max-width: 420px; margin: 0 auto 1rem;
+            display: flex; gap: .5rem; justify-content: center;
+        }
+        @media print {
+            body { background: #fff; }
+            .paper { margin: 0; box-shadow: none; border-radius: 0; max-width: 100%; }
+            .toolbar { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="toolbar">
+            <button class="btn btn-dark" onclick="window.print()">
+                <i class="bi bi-printer"></i> พิมพ์ใบเสร็จ
+            </button>
+            <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary">กลับ</a>
+        </div>
+
+        <div class="paper">
+            <div class="text-center mb-2">
+                <div class="receipt-logo">🍛</div>
+                <h1 class="mt-2 mb-0">ร้านผัดกะเพรารวมมิตร</h1>
+                <p class="muted mb-0">ใบเสร็จรับเงิน / ใบกำกับภาษี</p>
+            </div>
+
+            <div class="dashed"></div>
+
+            {% if order.is_paid %}
+            <p class="text-center status-ok mb-1"><i class="bi bi-check-circle-fill"></i> ชำระเงินแล้ว</p>
+            {% endif %}
+
+            <div class="row-line"><span class="name">เลขที่ใบเสร็จ</span><span class="val">{{ order.display_code }}</span></div>
+            <div class="row-line"><span class="name">โต๊ะ/ประเภท</span><span class="val">{% if order.order_type == 'delivery' %}🛵 เดลิเวอร์รี่{% else %}โต๊ะ {{ order.table_number }}{% endif %}</span></div>
+            <div class="row-line"><span class="name">เวลาสั่ง</span><span class="val">{{ order.created_at|date:"d/m/Y H:i น." }}</span></div>
+            {% if order.paid_at %}
+            <div class="row-line"><span class="name">เวลาชำระ</span><span class="val">{{ order.paid_at|date:"d/m/Y H:i น." }}</span></div>
+            {% endif %}
+            {% if order.payment_method %}
+            <div class="row-line"><span class="name">วิธีชำระ</span><span class="val">{{ order.get_payment_method_display }}</span></div>
+            {% endif %}
+            {% if order.created_by %}
+            <div class="row-line"><span class="name">พนักงาน</span><span class="val">{{ order.created_by.username }}</span></div>
+            {% endif %}
+
+            {% if order.delivery %}
+            <div class="dashed"></div>
+            <div class="fw-bold mb-1">🛵 ข้อมูลจัดส่ง</div>
+            <div class="row-line"><span class="name">ผู้รับ</span><span class="val">{{ order.delivery.recipient_name }}</span></div>
+            <div class="row-line"><span class="name">เบอร์โทร</span><span class="val">{{ order.delivery.phone }}</span></div>
+            <div class="row-line"><span class="name">ที่อยู่</span><span class="val text-start" style="max-width:60%;">{{ order.delivery.address }}</span></div>
+            <div class="row-line"><span class="name">ค่าจัดส่ง</span><span class="val">{{ order.delivery.fee }}฿</span></div>
+            {% if order.delivery.status %}
+            <div class="row-line"><span class="name">สถานะจัดส่ง</span><span class="val">{{ order.delivery.get_status_display }}</span></div>
+            {% endif %}
+            {% elif order.order_type == 'delivery' %}
+            <div class="dashed"></div>
+            <p class="muted text-center mb-0">⚠️ ออเดอร์เดลิเวอร์รี่นี้ยังไม่ได้ระบุข้อมูลจัดส่ง</p>
+            {% endif %}
+
+            <div class="dashed"></div>
+
+            {% for item in order.items.all %}
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="fw-semibold">{{ item.menu.name }} <span class="qty-pill">x{{ item.quantity }}</span></div>
+                    {% if item.addons.all %}
+                    <div class="muted">
+                        {% for addon in item.addons.all %}
+                            + {{ addon.name }} ({{ addon.price }}฿){% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                <span class="fw-semibold">{{ item.subtotal }}฿</span>
+            </div>
+            {% empty %}
+            <p class="muted text-center">ไม่มีรายการอาหาร</p>
+            {% endfor %}
+
+            <div class="dashed"></div>
+
+            {% if order.discount_amount > 0 %}
+            <div class="row-line text-success">
+                <span class="name">ส่วนลดสมาชิก ({{ order.membership_discount_percent }}%)</span>
+                <span class="val">-{{ order.discount_amount }}฿</span>
+            </div>
+            {% endif %}
+
+            <div class="total-box d-flex justify-content-between align-items-center">
+                <span class="fw-bold">รวมทั้งสิ้น ({{ order.item_count }} ชิ้น)</span>
+                <span class="fs-3 fw-bold" style="color:#ff5e62;">{{ order.discounted_total }}<small class="fs-6">฿</small></span>
+            </div>
+
+            <p class="muted text-center mt-3 mb-0">
+                ขอบคุณที่ใช้บริการครับ! 🙏<br>
+                หิวอีกทีแวะมาใหม่ได้ตลอด 😋
+            </p>
+
+            <div class="dashed"></div>
+            <p class="muted text-center mb-0" style="font-size:.7rem;">
+                ที่อยู่: {{ store.address|default:"ถนนสายกะเพราพริกสด แขวงใจกลางเมือง เขตอร่อยจัด 10100" }}<br>
+                โทร {{ store.phone|default:'089-XXX-XXXX' }} | LINE: @krapaorungrit
+            </p>
+        </div>
+    </div>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+</body>
+</html>

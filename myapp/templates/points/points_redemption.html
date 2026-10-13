@@ -1,0 +1,121 @@
+{% extends 'core/basetemplate.html' %}
+{% load static %}
+
+{% block title %}แลกคะแนน | The Coffee Club{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Balance Summary -->
+    <div class="col-12">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body text-center py-4">
+                <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
+                    <i class="bi bi-coin display-4 text-warning"></i>
+                    <div class="text-start">
+                        <div class="fw-bold display-5 lh-1">{{ balance }}</div>
+                        <small class="text-muted">คะแนนสะสมที่ใช้ได้</small>
+                    </div>
+                </div>
+                <p class="text-muted mb-0 small">
+                    สะสม <strong>1 คะแนน ต่อ {{ point_value|floatformat:0 }} บาท</strong> ·
+                    สถานะสมาชิกปัจจุบัน: <strong>{{ profile.get_membership_status_display }}</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reward Catalog -->
+    <div class="col-12">
+        <h5 class="fw-bold mb-3"><i class="bi bi-gift-fill text-warning me-2"></i>สิทธิ์ที่แลกได้</h5>
+        {% if rewards %}
+        <div class="row g-3">
+            {% for reward in rewards %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 rounded-4 {% if balance < reward.points_cost %}opacity-50{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold mb-0">{{ reward.name }}</h6>
+                            <span class="badge text-bg-warning"><i class="bi bi-coin me-1"></i>{{ reward.points_cost }}</span>
+                        </div>
+                        <p class="text-muted small mb-3">{{ reward.description }}</p>
+                        <div class="d-flex gap-2 flex-wrap small mb-3">
+                            <span class="badge bg-dark-subtle">
+                                {% if reward.discount_type == 'percent' %}
+                                    ส่วนลด {{ reward.value|floatformat:0 }}%
+                                {% else %}
+                                    ส่วนลด {{ reward.value|floatformat:0 }} บาท
+                                {% endif %}
+                            </span>
+                            {% if reward.min_order > 0 %}
+                            <span class="badge bg-dark-subtle">ขั้นต่ำ {{ reward.min_order|floatformat:0 }} บาท</span>
+                            {% endif %}
+                        </div>
+                        <form method="post" action="{% url 'points_redemption' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="reward_id" value="{{ reward.id }}">
+                            <button type="submit"
+                                    class="btn btn-warning fw-bold w-100"
+                                    {% if balance < reward.points_cost %}disabled{% endif %}>
+                                {% if balance < reward.points_cost %}
+                                    คะแนนไม่พอ
+                                {% else %}
+                                    แลกรับคูปอง
+                                {% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted">ยังไม่มีสิทธิ์แลกคะแนนในระบบ — รอเจ้าของร้านเพิ่มได้เลย</p>
+        {% endif %}
+    </div>
+
+    <!-- Transaction History -->
+    <div class="col-12">
+        <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-brand me-2"></i>ประวัติคะแนน</h5>
+        <div class="card shadow-sm border-0 rounded-4">
+            {% if transactions %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>เวลา</th>
+                            <th>รายการ</th>
+                            <th class="text-end">คะแนน</th>
+                            <th class="text-end">คงเหลือ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tx in transactions %}
+                        <tr>
+                            <td class="text-muted small">{{ tx.created_at|date:"d M Y H:i" }}</td>
+                            <td>
+                                {% if tx.reward %}
+                                <i class="bi bi-gift text-warning me-1"></i>{{ tx.reason }}
+                                {% else %}
+                                {{ tx.reason }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end fw-bold {% if tx.points_change > 0 %}text-success{% else %}text-danger{% endif %}">
+                                {{ tx.points_change|stringformat:'+d' }}
+                            </td>
+                            <td class="text-end">{{ tx.balance_after }}</td>
+                        </tr>
+                        {% empty %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body text-center text-muted py-4">
+                <i class="bi bi-inbox display-6 d-block mb-2"></i>
+                ยังไม่มีประวัติคะแนน — ชำระเงินแล้วจะสะสมคะแนนอัตโนมัติ
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

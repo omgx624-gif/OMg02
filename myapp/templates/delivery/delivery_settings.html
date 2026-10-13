@@ -1,0 +1,212 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ตั้งค่าเดลิเวอร์รี่ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+<style>
+    #store-map { height: 340px; border: 0; border-radius: .75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">⚙️</div>
+    <div>
+        <h1 class="h3 fw-bold mb-0">ตั้งค่าเดลิเวอร์รี่</h1>
+        <p class="text-muted mb-0">กำหนดตำแหน่งร้านและอัตราค่าส่งเพื่อคำนวณระยะทางอัตโนมัติ</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-soft border-0 h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-geo-alt-fill text-brand"></i> ตำแหน่งร้าน</h5>
+                    <div class="mb-3">
+                        <label class="form-label small">ชื่อสาขา</label>
+                        <input type="text" name="name" class="form-control" value="{{ store.name }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small">ที่อยู่ร้าน</label>
+                        <textarea name="address" class="form-control" rows="2">{{ store.address }}</textarea>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small">ละติจูด (ร้าน)</label>
+                            <input type="number" name="lat" id="store-lat" step="any" class="form-control" value="{{ store.lat }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small">ลองจิจูด (ร้าน)</label>
+                            <input type="number" name="lng" id="store-lng" step="any" class="form-control" value="{{ store.lng }}">
+                        </div>
+                    </div>
+                    <div class="ratio ratio-16x9 rounded-3 overflow-hidden">
+                        <iframe id="store-map"
+                                title="แผนที่ตำแหน่งร้าน (Google Maps)"
+                                src="https://maps.google.com/maps?q={{ store.lat }},{{ store.lng }}&z=16&hl=th&output=embed"
+                                allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
+                        <div class="small text-muted">
+                            <i class="bi bi-info-circle"></i> กรอกพิกัดละติจูด/ลองจิจูด แล้วแผนที่จะอัปเดตให้อัตโนมัติ —
+                            หรือจะกดจากแผนที่เต็มจอแล้วคัดลอกพิกัดมาวางก็ได้
+                        </div>
+                        <a id="store-map-open" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener"
+                           href="https://www.google.com/maps/search/?api=1&query={{ store.lat }},{{ store.lng }}">
+                            <i class="bi bi-box-arrow-up-right"></i> เลือกตำแหน่งใน Google Maps
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-soft border-0">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-cash-coin text-brand"></i> อัตราค่าส่ง</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">ค่าส่งพื้นฐาน (บาท)</label>
+                            <div class="input-group">
+                                <input type="number" name="fee_base" step="0.01" min="0" class="form-control"
+                                       value="{{ store.fee_base }}">
+                                <span class="input-group-text">บาท</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">อัตราต่อกิโลเมตร (บาท)</label>
+                            <div class="input-group">
+                                <input type="number" name="fee_per_km" step="0.01" min="0" class="form-control"
+                                       value="{{ store.fee_per_km }}">
+                                <span class="input-group-text">บาท/กม.</span>
+                            </div>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label small">ยอดสั่งที่ฟรีค่าส่ง (บาท)</label>
+                            <div class="input-group">
+                                <input type="number" name="free_delivery_over" step="0.01" min="0" class="form-control"
+                                       value="{{ store.free_delivery_over|default_if_none:'' }}">
+                                <span class="input-group-text">บาท</span>
+                            </div>
+                            <div class="form-text">ปล่อยว่าง = ไม่มีเงื่อนไขฟรีค่าส่ง</div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small mt-3 mb-0">
+                        <i class="bi bi-calculator text-brand"></i>
+                        ตัวอย่างระยะทาง 3 กม.: ค่าส่ง = {{ store.fee_base }} + ({{ store.fee_per_km }} × 3) บาท
+                        {% if store.free_delivery_over %}
+                        — ฟรีค่าส่งถ้ายอดสั่งตั้งแต่ {{ store.free_delivery_over }} บาทขึ้นไป
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-soft border-0 mt-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-lightning-charge-fill text-brand"></i> ระบบจัดสรรงานอัตโนมัติ</h5>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               name="auto_assign_enabled" id="auto-assign" {% if store.auto_assign_enabled %}checked{% endif %}>
+                        <label class="form-check-label" for="auto-assign">
+                            <strong>จัดสรรงานให้ไรเดอร์อัตโนมัติ</strong>
+                            <span class="d-block form-text">เมื่อเปิด งานที่ค้างเกินเวลารอรับจะถูกมอบให้ไรเดอร์ที่ว่างที่สุดเองโดยไม่ต้องแอดมินกำหนด</span>
+                        </label>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small">เวลารอรับงาน (นาที)</label>
+                            <div class="input-group">
+                                <input type="number" name="auto_assign_grace_minutes" min="0" max="60"
+                                       class="form-control" value="{{ store.auto_assign_grace_minutes }}">
+                                <span class="input-group-text">นาที</span>
+                            </div>
+                            <div class="form-text">เปิดโอกาสให้ไรเดอร์รับงานเองก่อน พ้นเวลานี้ระบบจะจัดสรรเอง</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small">เวลาสำรองงานค้าง (นาที)</label>
+                            <div class="input-group">
+                                <input type="number" name="auto_release_minutes" min="0" max="120"
+                                       class="form-control" value="{{ store.auto_release_minutes }}">
+                                <span class="input-group-text">นาที</span>
+                            </div>
+                            <div class="form-text">ไรเดอร์รับงานแล้วไม่คืบหน้าเกินเวลานี้ → ปล่อยงานให้คนอื่น (สูงสุด 2 ครั้ง)</div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mt-3 mb-0">
+                        <i class="bi bi-gear-wide-connected"></i>
+                        ระบบจะรันอัตโนมัติทุกครั้งที่เปิดหน้าเว็บของเดลิเวอร์รี่ และแนะนำตั้งค่างานในเครื่องด้วยคำสั่ง
+                        <code>python manage.py autodelivery</code> ทุก 1 นาที เพื่อความแม่นยำตามเวลา
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-soft border-0 mt-4">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-bell-fill text-brand"></i> Line Notify (API ภายนอก)</h5>
+                    <div class="mb-2">
+                        {% if has_line_token %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">ได้ตั้ง token แล้ว</span>
+                        <code class="ms-2 text-muted">{{ line_token_masked }}</code>
+                        {% else %}
+                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">ยังไม่ได้ตั้ง token</span>
+                        {% endif %}
+                    </div>
+                    <p class="small text-muted mb-2">
+                        ส่งการแจ้งเตือนออเดอร์ / จองโต๊ะ / รีวิวใหม่ไปที่ Line — ตั้ง token ได้ที่
+                        <a href="/admin/myapp/storelocation/1/change/" target="_blank">ระบบ Admin (StoreLocation)</a>
+                        หรือตัวแปรสภาพแวดล้อม <code>LINE_NOTIFY_TOKEN</code>
+                    </p>
+                    <form method="post" action="{% url 'line_notify_test' %}" class="mt-1">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                            <i class="bi bi-send me-1"></i> ส่งข้อความทดสอบ
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-gradient px-4">
+            <i class="bi bi-check-lg me-1"></i> บันทึกการตั้งค่า
+        </button>
+        <a href="{% url 'delivery_dashboard' %}" class="btn btn-outline-secondary px-4">ยกเลิก</a>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // อัปเดตแผนที่ Google Maps (embed ไม่ต้องใช้ API Key) จากพิกัดที่กรอก
+    (function () {
+        const latEl = document.getElementById('store-lat');
+        const lngEl = document.getElementById('store-lng');
+        const mapFrame = document.getElementById('store-map');
+        const openLink = document.getElementById('store-map-open');
+        if (!latEl || !lngEl || !mapFrame) return;
+
+        const ZOOM = 16;
+        const gmUrl = function (lat, lng) {
+            const l = parseFloat(lat) || 16.4539;
+            const n = parseFloat(lng) || 99.5123;
+            return 'https://maps.google.com/maps/?q=' + l + ',' + n + '&z=' + ZOOM + '&hl=th&output=embed';
+        };
+        const openUrl = function (lat, lng) {
+            const l = parseFloat(lat) || 16.4539;
+            const n = parseFloat(lng) || 99.5123;
+            return 'https://www.google.com/maps/search/?api=1&query=' + l + ',' + n;
+        };
+
+        const refresh = function () {
+            mapFrame.src = gmUrl(latEl.value, lngEl.value);
+            openLink.href = openUrl(latEl.value, lngEl.value);
+        };
+        latEl.addEventListener('input', refresh);
+        lngEl.addEventListener('input', refresh);
+    })();
+</script>
+{% endblock %}

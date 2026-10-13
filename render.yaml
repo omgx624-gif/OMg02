@@ -1,0 +1,49 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# ใช้ Dockerfile ที่มีอยู่ (Python 3.14) + PostgreSQL ที่ Render จัดให้
+
+services:
+  - type: web
+    name: myproject-restaurant
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    # สร้าง schema/seed ในครั้งแรก (idempotent: migrate + createcachetable + seed_menu + google app)
+    preDeployCommand: "python manage.py migrate --noinput && python manage.py createcachetable && python manage.py seed_menu && python manage.py create_google_app --domain \"${RENDER_EXTERNAL_HOSTNAME:-localhost}\""
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DJANGO_SECURE
+        value: "1"
+      - key: DJANGO_TRUSTED_PROXY
+        value: "1"
+      - key: DJANGO_DB_ENGINE
+        value: "postgres"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: myproject-db
+          property: connectionString
+      - key: DJANGO_AUTOMATION_MIN_INTERVAL
+        value: "10"
+      - key: DJANGO_CACHE_LOCATION
+        value: "restaurant_cache"
+      # ตั้งค่า Google OAuth ใน Render Dashboard (ไม่ commit ค่าจริง)
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      # (ทางเลือก) SENTRY / LINE / CORS
+      - key: DJANGO_SENTRY_DSN
+        sync: false
+      - key: LINE_NOTIFY_TOKEN
+        sync: false
+
+databases:
+  - name: myproject-db
+    databaseName: restaurant
+    user: restaurant
+    plan: free

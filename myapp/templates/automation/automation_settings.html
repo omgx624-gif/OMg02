@@ -1,0 +1,118 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ตั้งค่าระบบอัตโนมัติ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-3 mb-4">
+    <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🔄</div>
+    <div>
+        <h1 class="h3 fw-bold mb-0">ตั้งค่าระบบอัตโนมัติ (Autopilot)</h1>
+        <p class="text-muted mb-0">เดินสถานะออเดอร์/จัดส่ง มอบงานไรเดอร์ สะสมคะแนน และแจ้งเตือน โดยอัตโนมัติ</p>
+    </div>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="card shadow-soft border-0 mb-4">
+        <div class="card-body">
+            <h5 class="fw-bold mb-3"><i class="bi bi-power text-brand"></i> เปิด/ปิดระบบ</h5>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" role="switch" name="enabled" id="enabled"
+                       {% if cfg.enabled %}checked{% endif %}>
+                <label class="form-check-label" for="enabled">
+                    <strong>เปิดระบบอัตโนมัติทั้งหมด</strong>
+                    <span class="d-block form-text">เปิดแล้วระบบจะเดินสถานะออเดอร์/จัดส่ง และมอบงานให้ไรเดอร์เองตามเวลา</span>
+                </label>
+            </div>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" role="switch" name="auto_pay" id="auto-pay"
+                       {% if cfg.auto_pay %}checked{% endif %}>
+                <label class="form-check-label" for="auto-pay">
+                    <strong>ตัดชำระเงินอัตโนมัติ</strong>
+                    <span class="d-block form-text">เปิดแล้วระบบจะปิดบิล (ชำระแล้ว) ให้เองเมื่อครบเวลาทานในร้านหรือส่งสำเร็จ</span>
+                </label>
+            </div>
+            <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" name="auto_earn_points" id="auto-points"
+                       {% if cfg.auto_earn_points %}checked{% endif %}>
+                <label class="form-check-label" for="auto-points">
+                    <strong>สะสมคะแนนสมาชิกอัตโนมัติ</strong>
+                    <span class="d-block form-text">คิดคะแนนตามสถานะสมาชิก (ทั่วไป/VIP/พรีเมียม) เมื่อออเดอร์ชำระเสร็จ</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-soft border-0 h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-basket2-fill text-brand"></i> ออเดอร์ทานในร้าน (นาที)</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">เตรียมอาหาร</label>
+                            <input type="number" name="preparing_minutes" min="0" class="form-control"
+                                   value="{{ cfg.preparing_minutes }}">
+                            <div class="form-text">เปิดออเดอร์ → กำลังเตรียม</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">พร้อมเสิร์ฟ</label>
+                            <input type="number" name="ready_minutes" min="0" class="form-control"
+                                   value="{{ cfg.ready_minutes }}">
+                            <div class="form-text">กำลังเตรียม → พร้อมเสิร์ฟ</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">เสิร์ฟ/ทาน</label>
+                            <input type="number" name="served_minutes" min="0" class="form-control"
+                                   value="{{ cfg.served_minutes }}">
+                            <div class="form-text">พร้อมเสิร์ฟ → เสิร์ฟแล้ว</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-soft border-0 h-100">
+                <div class="card-body">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-scooter text-brand"></i> การจัดส่ง (นาที)</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label small">ไปรับอาหาร</label>
+                            <input type="number" name="picking_up_minutes" min="0" class="form-control"
+                                   value="{{ cfg.picking_up_minutes }}">
+                            <div class="form-text">รับงาน → ไปรับอาหาร</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">กำลังจัดส่ง</label>
+                            <input type="number" name="out_for_delivery_minutes" min="0" class="form-control"
+                                   value="{{ cfg.out_for_delivery_minutes }}">
+                            <div class="form-text">ไปรับอาหาร → กำลังจัดส่ง</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small">จัดส่งสำเร็จ</label>
+                            <input type="number" name="delivered_minutes" min="0" class="form-control"
+                                   value="{{ cfg.delivered_minutes }}">
+                            <div class="form-text">กำลังจัดส่ง → จัดส่งสำเร็จ</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-info small mt-4 mb-0">
+        <i class="bi bi-gear-wide-connected"></i>
+        ระบบต้องถูกเรียกเป็นระยะ (แนะนำทุก 1 นาที) ด้วยคำสั่ง
+        <code>python manage.py automate_all</code> เพื่อให้สถานะเดินตามเวลาได้แม่นยำ
+        — หรือเปิดใช้พร้อมรันผ่านหน้าเว็บที่มีงาน (idempotent)
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-primary btn-gradient px-4">
+            <i class="bi bi-check-lg me-1"></i> บันทึกการตั้งค่า
+        </button>
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4">ยกเลิก</a>
+    </div>
+</form>
+{% endblock %}

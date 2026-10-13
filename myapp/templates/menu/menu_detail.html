@@ -1,0 +1,164 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}{{ menu.name }} - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <a href="{% url 'menu_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> กลับไปรายการเมนู
+    </a>
+    {% if user.is_staff %}
+    <div class="d-flex gap-2">
+        <a href="{% url 'menu_update' menu.pk %}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil"></i> แก้ไข
+        </a>
+        <a href="{% url 'menu_delete' menu.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash"></i> ลบ
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card shadow-soft overflow-hidden mb-5">
+    <div class="row g-0">
+        <div class="col-lg-6">
+            {% if menu.image %}
+            <img src="{{ menu.image.url }}" alt="{{ menu.name }}" class="w-100" style="height:100%; min-height:360px; object-fit:cover;">
+            {% else %}
+            <div class="menu-placeholder d-flex align-items-center justify-content-center w-100" style="height:360px; font-size:6rem;">🍛</div>
+            {% endif %}
+        </div>
+        <div class="col-lg-6 p-4 p-lg-5 d-flex flex-column">
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="badge bg-white text-dark border shadow-sm">{{ menu.get_category_display }}</span>
+                {% if avg_rating %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                    <i class="bi bi-star-fill"></i> {{ avg_rating|floatformat:1 }} ({{ review_count }} รีวิว)
+                </span>
+                {% endif %}
+                {% if menu.available %}
+                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                    <i class="bi bi-check-circle-fill"></i> พร้อมขาย
+                </span>
+                {% else %}
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                    <i class="bi bi-x-circle-fill"></i> หมดวันนี้
+                </span>
+                {% endif %}
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                    <i class="bi bi-fire"></i> {% if menu.spice_level == 0 %}ไม่เผ็ด{% else %}{% for _ in ""|center:menu.spice_level %}🌶️{% endfor %}{% endif %}
+                </span>
+            </div>
+
+            <h1 class="h3 fw-bold mb-2">{{ menu.name }}</h1>
+            <div class="price-tag text-gradient mb-4">฿{{ menu.price }}</div>
+
+            {% if menu.description %}
+            <p class="text-muted flex-grow-1">{{ menu.description|linebreaksbr }}</p>
+            {% else %}
+            <p class="text-muted fst-italic flex-grow-1">ยังไม่มีรายละเอียดเมนูนี้</p>
+            {% endif %}
+
+            <hr>
+            <div class="small text-muted mb-4">
+                <i class="bi bi-calendar3"></i> เพิ่มเข้าระบบเมื่อ {{ menu.date_added|date:"d/m/Y" }}
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'order_list' %}" class="btn btn-gradient btn-lg px-4">
+                    <i class="bi bi-cart-plus"></i> สั่งเมนูนี้
+                </a>
+                <a href="{% url 'contact' %}" class="btn btn-outline-dark btn-lg px-4">
+                    <i class="bi bi-geo-alt"></i> นำทางมาที่ร้าน
+                </a>
+                {% if user.is_authenticated %}
+                <a href="{% url 'review_create' menu.pk %}" class="btn btn-outline-warning btn-lg px-4">
+                    <i class="bi bi-star"></i> {% if user_review %}แก้รีวิวของฉัน{% else %}รีวิวเมนูนี้{% endif %}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if related_menus %}
+<h5 class="fw-bold mb-3">🍽️ เมนูแนะนำที่ใกล้เคียง</h5>
+<div class="row g-4">
+    {% for menu in related_menus %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-soft hover-lift menu-card">
+            <div class="position-relative">
+                {% if menu.image %}
+                <img src="{{ menu.image.url }}" alt="{{ menu.name }}" class="card-img-top menu-img" loading="lazy" decoding="async">
+                {% else %}
+                <div class="menu-placeholder d-flex align-items-center justify-content-center">🍛</div>
+                {% endif %}
+            </div>
+<div class="card-body d-flex flex-column p-4">
+                <h5 class="card-title fw-bold mb-2">{{ menu.name }}</h5>
+                <p class="card-text text-muted small flex-grow-1">
+                    {% if menu.description %}{{ menu.description|truncatewords:12 }}{% else %}เมนูแสนอร่อยของร้านเรา{% endif %}
+                </p>
+                <div class="mt-auto pt-2 d-flex justify-content-between align-items-center">
+                    <span class="price-tag text-gradient">฿{{ menu.price }}</span>
+                    <a href="{% url 'menu_detail' menu.pk %}" class="btn btn-sm btn-outline-primary">ดูรายละเอียด</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- ส่วนรีวิว -->
+<div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold mb-0">⭐ รีวิวจากลูกค้า ({{ review_count }})</h5>
+        {% if user.is_authenticated %}
+        <a href="{% url 'review_create' menu.pk %}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-star"></i> {% if user_review %}แก้ไขรีวิวของฉัน{% else %}เขียนรีวิว{% endif %}
+        </a>
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-outline-warning btn-sm">
+            <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบเพื่อรีวิว
+        </a>
+        {% endif %}
+    </div>
+
+    {% if reviews %}
+    <div class="row g-3">
+        {% for review in reviews %}
+        <div class="col-md-6">
+            <div class="card shadow-soft h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="user-avatar" style="width:34px;height:34px;font-size:.85rem;">
+                                {{ review.user.username|first|upper }}
+                            </span>
+                            <span class="fw-bold">{{ review.user.username }}</span>
+                        </div>
+                        <div class="text-warning">
+                            {% for _ in ""|center:5 %}{% if forloop.counter <= review.rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}{% endfor %}
+                        </div>
+                    </div>
+                    {% if review.comment %}
+                    <p class="mb-2 text-muted">{{ review.comment|linebreaksbr }}</p>
+                    {% else %}
+                    <p class="mb-2 text-muted fst-italic">ไม่มีคอมเมนต์</p>
+                    {% endif %}
+                    <small class="text-muted">{{ review.created_at|date:"d/m/Y H:i" }}</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state card shadow-soft text-center">
+        <span class="emoji">⭐</span>
+        <h5 class="fw-bold">ยังไม่มีรีวิวเมนูนี้</h5>
+        <p class="text-muted mb-0">เป็นคนแรกที่แชร์ความเห็นของคุณ</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

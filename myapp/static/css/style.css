@@ -1,0 +1,9 @@
+body {
+    background-color: rgb(172, 172, 172);
+    font-family: Arial, sans-serif;
+}
+
+/* กำหนดสีของหัวข้อ */
+h1 {
+    color: rgb(211, 113, 0);
+}

@@ -1,0 +1,116 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ชำระเงินด้วย QR PromptPay - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-soft overflow-hidden">
+            <div class="card-header bg-grad text-white border-0 p-4 text-center">
+                <h4 class="mb-1 fw-bold">📱 ชำระเงินด้วย QR PromptPay</h4>
+                <p class="mb-0 opacity-75">
+                    {% if order.order_type == 'delivery' %}
+                    🛵 เดลิเวอร์รี่ — ออเดอร์ {{ order.display_code }}
+                    {% else %}
+                    🪑 โต๊ะ {{ order.table_number }} — ออเดอร์ {{ order.display_code }}
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4">
+                    <!-- สรุปบิล -->
+                    <div class="col-md-6 text-center">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-qr-code text-brand"></i> สแกนจ่าย</h5>
+                        {% if qr_enabled and qr_data %}
+                        <div class="alert alert-light border shadow-sm p-3">
+                            <img src="{{ qr_data }}" alt="QR PromptPay" style="max-width:260px;width:100%;border-radius:.75rem;">
+                            <div class="fw-bold mt-3 fs-5 text-brand">ยอดชำระ {{ order.discounted_total }} บาท</div>
+                            <small class="text-muted d-block mt-1">QR นี้ใช้จ่ายยอดนี้โดยเฉพาะ (ยอดเปลี่ยนให้เปิดใหม่)</small>
+                        </div>
+                        <div class="small text-muted mt-2">
+                            1) เปิดแอปธนาคาร → เลือกสแกน QR<br>
+                            2) ตรวจสอบยอดเงินให้ตรงก่อนยืนยัน<br>
+                            3) ถ่าย/บันทึกสลิป แล้วแจ้งชำระด้านขวา
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            ร้านยังไม่ได้ตั้งค่า PromptPay ID ในหน้าการตั้งค่าร้าน จึงไม่สามารถแสดง QR ได้
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- แจ้งชำระ -->
+                    <div class="col-md-6">
+                        <form method="post" enctype="multipart/form-data" novalidate>
+                            {% csrf_token %}
+                            <h5 class="fw-bold mb-3"><i class="bi bi-send-check text-brand"></i> เลือกวิธีชำระเงิน</h5>
+
+                            <label class="pay-card mb-2">
+                                <input type="radio" name="method" value="qr" required checked>
+                                <span class="pay-icon">📱</span>
+                                <span>
+                                    <span class="d-block fw-bold">QR PromptPay</span>
+                                    <small class="text-muted">สแกนจ่ายได้ทุกธนาคาร</small>
+                                </span>
+                            </label>
+                            <label class="pay-card mb-2">
+                                <input type="radio" name="method" value="transfer" required>
+                                <span class="pay-icon">🏦</span>
+                                <span>
+                                    <span class="d-block fw-bold">โอนเงิน</span>
+                                    <small class="text-muted">ผ่านแอปธนาคาร / Mobile Banking</small>
+                                </span>
+                            </label>
+                            <label class="pay-card mb-3">
+                                <input type="radio" name="method" value="cash" required>
+                                <span class="pay-icon">💵</span>
+                                <span>
+                                    <span class="d-block fw-bold">เงินสด</span>
+                                    <small class="text-muted">แจ้งว่าจะจ่ายที่เคาน์เตอร์</small>
+                                </span>
+                            </label>
+
+                            <div id="qr-panel-customer" class="text-center mb-3 {% if not qr_enabled or not qr_data %}d-none{% endif %}">
+                            </div>
+
+                            <div class="mb-3">
+                                {{ form.qr_payment_reference.label_tag }}
+                                {{ form.qr_payment_reference }}
+                                {% if form.qr_payment_reference.errors %}
+                                <div class="text-danger small mt-1">{{ form.qr_payment_reference.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.qr_payment_slip.label_tag }}
+                                {{ form.qr_payment_slip }}
+                                {% if form.qr_payment_slip.errors %}
+                                <div class="text-danger small mt-1">{{ form.qr_payment_slip.errors }}</div>
+                                {% endif %}
+                                <small class="text-muted">รองรับไฟล์รูปภาพ ไม่เกิน 10MB (ไม่บังคับ)</small>
+                            </div>
+
+                            <button type="submit" class="btn btn-gradient w-100 py-3 fs-5">
+                                <i class="bi bi-check2-circle"></i> ฉันชำระผ่าน QR แล้ว
+                            </button>
+                        </form>
+                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="bi bi-arrow-left"></i> กลับไปหน้าออเดอร์
+                        </a>
+
+                        {% if order.qr_payment_requested_at %}
+                        <div class="alert alert-info mt-3 small">
+                            <i class="bi bi-info-circle"></i>
+                            คุณแจ้งชำระแล้วเมื่อ {{ order.qr_payment_requested_at|date:'d/m/Y H:i' }}
+                            {% if order.qr_payment_reference %}<br>อ้างอิง: {{ order.qr_payment_reference }}{% endif %}
+                            <br>รอพนักงานยืนยันและปิดบิลในระบบ
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

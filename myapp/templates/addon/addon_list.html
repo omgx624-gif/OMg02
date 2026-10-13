@@ -1,0 +1,69 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}การเพิ่มเครื่องเคียง - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">➕</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">การเพิ่มเครื่องเคียง</h1>
+            <p class="text-muted mb-0">เช่น เพิ่มข้าว, เพิ่มไข่ดาว (คิดครั้งละ 1 ราคา ต่อรายการ)</p>
+        </div>
+    </div>
+    <a href="{% url 'addon_create' %}" class="btn btn-gradient">
+        <i class="bi bi-plus-lg"></i> เพิ่มเครื่องเคียง
+    </a>
+</div>
+
+{% if addons %}
+<div class="card shadow-soft">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light">
+                <tr>
+                    <th>#</th>
+                    <th>ชื่อเครื่องเคียง</th>
+                    <th class="text-center">ราคา (บาท)</th>
+                    <th class="text-center">สถานะ</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for addon in addons %}
+                <tr>
+                    <td class="fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold">{{ addon.name }}</td>
+                    <td class="text-center">{{ addon.price }}฿</td>
+                    <td class="text-center">
+                        {% if addon.is_active %}
+                        <span class="badge bg-success">เปิดใช้งาน</span>
+                        {% else %}
+                        <span class="badge bg-secondary">ปิดใช้งาน</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        <a href="{% url 'addon_update' addon.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> แก้ไข
+                        </a>
+                        <a href="{% url 'addon_delete' addon.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> ลบ
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state card shadow-soft text-center">
+    <span class="emoji">➕</span>
+    <h4 class="fw-bold">ยังไม่มีเครื่องเคียง</h4>
+    <p class="text-muted mb-3">กดปุ่มด้านบนเพื่อเพิ่มเครื่องเคียงแรก</p>
+    <a href="{% url 'addon_create' %}" class="btn btn-gradient">
+        <i class="bi bi-plus-lg"></i> เพิ่มเครื่องเคียงแรก
+    </a>
+</div>
+{% endif %}
+{% endblock %}

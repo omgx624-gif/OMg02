@@ -1,0 +1,279 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก | ร้านผัดกะเพรารวมมิตร</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Prompt', sans-serif; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #ff9966 0%, #ff5e62 50%, #d31027 100%);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 1.5rem;
+            position: relative;
+            overflow-y: auto;
+        }
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            animation: float 8s ease-in-out infinite;
+        }
+        .blob-1 { width: 320px; height: 320px; top: -100px; left: -100px; }
+        .blob-2 { width: 220px; height: 220px; bottom: -60px; right: -60px; animation-delay: 2s; }
+        .blob-3 { width: 120px; height: 120px; top: 20%; right: 12%; animation-delay: 4s; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-25px); }
+        }
+        .register-card {
+            width: 100%;
+            max-width: 480px;
+            background: #fff;
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.25);
+            position: relative;
+            z-index: 10;
+            animation: slideUp 0.5s ease-out;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logo-circle {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 1rem;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 10px 25px rgba(255, 94, 98, 0.45);
+        }
+        .login-title { font-weight: 700; color: #333; margin-bottom: 0.25rem; }
+        .login-subtitle { color: #999; font-size: 0.95rem; }
+        .form-label { font-weight: 500; color: #555; margin-bottom: 0.35rem; }
+        .form-control {
+            border: 1.5px solid #eee;
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+        }
+        .form-control:focus {
+            box-shadow: 0 0 0 4px rgba(255, 94, 98, 0.12);
+            border-color: #ff9966;
+        }
+        .form-text { font-size: 0.85rem; }
+        .btn-register {
+            width: 100%;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            box-shadow: 0 8px 20px rgba(255, 94, 98, 0.4);
+            transition: all 0.25s;
+        }
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 26px rgba(255, 94, 98, 0.55);
+            color: #fff;
+        }
+        .btn-register:active { transform: translateY(0); }
+        .alert { border-radius: 14px; font-size: 0.92rem; }
+        .card-footer-link { text-align: center; margin-top: 1.5rem; color: #999; font-size: 0.9rem; }
+        .card-footer-link a { color: #ff5e62; font-weight: 600; text-decoration: none; }
+        .card-footer-link a:hover { text-decoration: underline; }
+        .errorlist {
+            list-style: none;
+            padding: 0;
+            margin: 0.25rem 0 0;
+            font-size: 0.85rem;
+            color: #dc3545;
+        }
+        .role-note {
+            background: #fff7f5;
+            border: 1.5px dashed #ffc2b3;
+            border-radius: 12px;
+            padding: 0.6rem 0.9rem;
+            font-size: 0.85rem;
+            color: #b3472f;
+        }
+        .btn-google {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1.5px solid #e2e2e2;
+            border-radius: 14px;
+            background: #fff;
+            color: #333;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        .btn-google:hover {
+            background: #f8f9fa;
+            border-color: #c9c9c9;
+            transform: translateY(-1px);
+        }
+        .btn-google svg {
+            width: 20px;
+            height: 20px;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #b0b0b0;
+            font-size: 0.85rem;
+            margin: 1.25rem 0;
+        }
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #eee;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="register-card">
+
+        <div class="text-center mb-3">
+            <div class="logo-circle">🍛</div>
+            <h1 class="login-title h3">สมัครสมาชิก</h1>
+            <p class="login-subtitle">ร้านผัดกะเพรารวมมิตร — อร่อยเกินเบอร์</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    <div class="alert alert-success d-flex align-items-center gap-2 py-2">
+                        <i class="bi bi-check-circle-fill"></i> {{ message }}
+                    </div>
+                {% elif message.tags == 'error' %}
+                    <div class="alert alert-danger d-flex align-items-center gap-2 py-2">
+                        <i class="bi bi-exclamation-circle-fill"></i> {{ message }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+                        <i class="bi bi-info-circle-fill"></i> {{ message }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+
+
+        <form method="post" novalidate enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="id_username" class="form-label">ชื่อผู้ใช้ <span class="text-danger">*</span></label>
+                <input type="text" name="username" id="id_username"
+                       class="form-control {% if form.username.errors %}is-invalid{% endif %}"
+                       placeholder="ภาษาอังกฤษ ตัวเลข หรือ @ . + - เท่านั้น"
+                       value="{{ form.username.value|default:'' }}" required>
+                {% if form.username.errors %}<ul class="errorlist">{{ form.username.errors }}</ul>{% endif %}
+            </div>
+
+            <div class="row">
+                <div class="col-6 mb-3">
+                    <label for="id_first_name" class="form-label">ชื่อจริง</label>
+                    <input type="text" name="first_name" id="id_first_name"
+                           class="form-control" placeholder="ชื่อจริง"
+                           value="{{ form.first_name.value|default:'' }}">
+                </div>
+                <div class="col-6 mb-3">
+                    <label for="id_last_name" class="form-label">นามสกุล</label>
+                    <input type="text" name="last_name" id="id_last_name"
+                           class="form-control" placeholder="นามสกุล"
+                           value="{{ form.last_name.value|default:'' }}">
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="id_email" class="form-label">อีเมล</label>
+                <input type="email" name="email" id="id_email"
+                       class="form-control" placeholder="name@example.com"
+                       value="{{ form.email.value|default:'' }}">
+                {% if form.email.errors %}<ul class="errorlist">{{ form.email.errors }}</ul>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_password1" class="form-label">รหัสผ่าน <span class="text-danger">*</span></label>
+                <input type="password" name="password1" id="id_password1"
+                       class="form-control {% if form.password1.errors %}is-invalid{% endif %}"
+                       placeholder="••••••••" required>
+                {% if form.password1.errors %}<ul class="errorlist">{{ form.password1.errors }}</ul>{% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="id_password2" class="form-label">ยืนยันรหัสผ่าน <span class="text-danger">*</span></label>
+                <input type="password" name="password2" id="id_password2"
+                       class="form-control {% if form.password2.errors %}is-invalid{% endif %}"
+                       placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง" required>
+                {% if form.password2.errors %}<ul class="errorlist">{{ form.password2.errors }}</ul>{% endif %}
+            </div>
+
+            <div class="mb-4">
+                <label for="id_avatar" class="form-label">รูปโปรไฟล์ (ไม่บังคับ)</label>
+                <input type="file" name="avatar" id="id_avatar" accept="image/*" class="form-control">
+                {% if form.avatar.errors %}<ul class="errorlist">{{ form.avatar.errors }}</ul>{% endif %}
+            </div>
+
+            <div class="role-note mb-4">
+                <i class="bi bi-shield-lock-fill me-1"></i> บัญชีที่สมัครจะได้สิทธิ์เป็น <strong>สมาชิกทั่วไป</strong> เท่านั้น
+                (ไม่สามารถเลือกเป็นผู้ดูแลระบบได้) และต้องรอ <strong>ผู้ดูแลอนุมัติ</strong> ก่อนจึงจะเข้าสู่ระบบได้
+            </div>
+
+            <div class="mb-4">
+                <label for="id_captcha_answer" class="form-label">แคปต์ชา — ยืนยันว่าไม่ใช่บอท</label>
+                <div class="input-group">
+                    <span class="input-group-text captcha-question" style="font-weight: 700; min-width: 90px; justify-content: center; background: #fff7f5; border: 1.5px solid #eee; border-radius: 14px 0 0 14px; color: #ff5e62;">
+                        {{ captcha_question }}
+                    </span>
+                    <input type="number" name="captcha_answer" id="id_captcha_answer"
+                           class="form-control {% if form.captcha_answer.errors %}is-invalid{% endif %}"
+                           placeholder="ใส่คำตอบ" min="0" autocomplete="off" required
+                           value="{{ form.captcha_answer.value|default:'' }}" style="border-left: none; border-radius: 0 14px 14px 0;">
+                </div>
+                {% if form.captcha_answer.errors %}<ul class="errorlist">{{ form.captcha_answer.errors }}</ul>{% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-register">
+                <i class="bi bi-person-plus-fill me-1"></i> สมัครสมาชิก
+            </button>
+        </form>
+
+        <div class="card-footer-link">
+            มีบัญชีอยู่แล้ว? <a href="{% url 'login' %}">เข้าสู่ระบบ</a> ·
+            <a href="{% url 'home' %}"><i class="bi bi-arrow-left"></i> กลับหน้าหลัก</a>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

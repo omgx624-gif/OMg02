@@ -1,0 +1,300 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}สั่งอาหาร - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+<style>
+    .new-order-card {
+        max-height: calc(100vh - 6.3rem);
+        display: flex;
+        flex-direction: column;
+    }
+    .new-order-card .card-body { overflow-y: auto; }
+    @media (max-width: 991.98px) {
+        .new-order-card { position: static !important; max-height: none; }
+        .new-order-card .card-body { overflow: visible; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if user.is_staff %}
+<div class="card shadow-soft mb-4" id="qr">
+    <div class="card-body py-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <span class="badge bg-dark p-2"><i class="bi bi-qr-code fs-5"></i></span>
+            <div>
+                <h6 class="fw-bold mb-0">QR โต๊ะ & ส่งออกรายงาน</h6>
+                <small class="text-muted">ปริ้นต์ QR ไปติดโต๊ะ / ส่งออกยอดขายเป็นไฟล์</small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <form class="d-flex gap-2 align-items-center"
+                  onsubmit="var t=document.getElementById('qrTable').value; if(!t||t<1){alert('กรอกเลขโต๊ะ 1-999');return false;} window.location.href='{% url 'table_qr' 0 %}'.replace('/0/qr/', '/') + t + '/qr/'; return false;">
+                <input type="number" id="qrTable" class="form-control form-control-sm" style="width:90px;" min="1" max="999" placeholder="โต๊ะ" required>
+                <button type="submit" class="btn btn-sm btn-outline-dark" title="สร้าง QR โต๊ะ">
+                    <i class="bi bi-qr-code"></i> QR โต๊ะ
+                </button>
+            </form>
+            <a href="{% url 'export_orders_csv' %}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-file-earmark-spreadsheet"></i> CSV
+            </a>
+            <a href="{% url 'export_orders_xlsx' %}" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-file-earmark-excel"></i> Excel
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-soft sticky-top new-order-card" style="top: 5.5rem;">
+            <div class="card-header bg-grad text-white rounded-top-4 border-0 p-3">
+                <h5 class="mb-0 fw-bold">🧾 เปิดออเดอร์ใหม่</h5>
+            </div>
+            <div class="card-body p-4">
+                {% if has_active_order %}
+                <div class="alert alert-warning d-flex align-items-start gap-2 mb-3">
+                    <i class="bi bi-exclamation-triangle-fill fs-5 mt-1"></i>
+                    <div>
+                        <strong>คุณมีออเดอร์ที่ยังไม่ชำระ</strong>
+                        <div class="small mt-1">ออเดอร์ {{ active_order.display_code }} · {{ active_order.table_display }}<br>
+                        ต้องชำระเงิน (หรือยกเลิก) ก่อนจึงจะเปิดออเดอร์ใหม่ได้</div>
+                    </div>
+                </div>
+                <a href="{% url 'order_detail' active_order.pk %}" class="btn btn-warning w-100 py-2 mb-3">
+                    <i class="bi bi-receipt"></i> ไปจัดการออเดอร์ปัจจุบัน
+                </a>
+                {% else %}
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% for field in form.visible_fields %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-gradient w-100 py-2">
+                        <i class="bi bi-plus-circle"></i> เปิดออเดอร์
+                    </button>
+                </form>
+                {% endif %}
+                <p class="text-muted small mt-3 mb-0 d-flex align-items-center gap-2 flex-wrap">
+                    <span class="badge bg-warning text-dark"><span class="pulse-dot me-1"></span>{{ status_counts.open }} กำลังทาน</span>
+                    <span class="badge bg-info text-white">{{ status_counts.preparing }} เตรียม</span>
+                    <span class="badge bg-primary">{{ status_counts.ready }} พร้อมเสิร์ฟ</span>
+                    <span class="badge bg-success">{{ status_counts.served }} เสิร์ฟแล้ว</span>
+                    <span class="badge bg-warning-subtle text-warning border">{{ status_counts.pending }} รอดำเนินการ</span>
+                    <span class="badge bg-info-subtle text-info border">{{ status_counts.confirmed }} ยืนยันแล้ว</span>
+                    <span class="badge bg-primary-subtle text-primary border">{{ status_counts.completed }} เสร็จสิ้น</span>
+                    <span class="badge bg-danger-subtle text-danger border">{{ status_counts.refunded }} คืนเงิน</span>
+                </p>
+                {% if user.is_staff %}
+                <hr>
+                <a href="{% url 'delivery_dashboard' %}" class="d-flex align-items-center justify-content-between text-decoration-none p-2 rounded-3"
+                   style="background:#f0f9ff; color:#0b5ed7;">
+                    <span class="fw-semibold"><i class="bi bi-scooter"></i> ออเดอร์เดลิเวอร์รี่</span>
+                    <span class="badge bg-primary">{{ pending_delivery_count }} ค้าง</span>
+                </a>
+                <div class="small text-muted mt-1 d-flex justify-content-between">
+                    <span>สั่งเดลิเวอร์รี่ทั้งหมด: <strong>{{ delivery_count }}</strong></span>
+                    <span>ทานในร้าน: <strong>{{ dine_in_count }}</strong></span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <h1 class="h4 fw-bold mb-3 d-flex align-items-center gap-2">
+            📋 รายการออเดอร์ทั้งหมด
+        </h1>
+
+        <!-- Search & Filter -->
+        <div class="card shadow-soft mb-3">
+            <div class="card-body py-2 px-3">
+                <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+                    <div class="input-group input-group-sm" style="max-width:220px;">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="q" class="form-control" placeholder="ค้นหาออเดอร์/ผู้รับ..." value="{{ query }}">
+                    </div>
+                    <select name="type" class="form-select form-select-sm" style="max-width:150px;" onchange="this.form.submit()">
+                        <option value="">ทุกประเภท</option>
+                        {% for val, label in ORDER_TYPE_CHOICES %}
+                        <option value="{{ val }}" {% if type_filter == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="status" class="form-select form-select-sm" style="max-width:180px;" onchange="this.form.submit()">
+                        <option value="">ทุกสถานะ</option>
+                        {% for val, label in STATUS_CHOICES %}
+                        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-funnel"></i> ค้นหา
+                    </button>
+                    {% if query or status_filter or type_filter %}
+                    <a href="{% url 'order_list' %}" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-x-lg"></i> ล้าง
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        {% if page_obj.object_list %}
+        <div class="table-responsive card shadow-soft">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ออเดอร์</th>
+                        <th>โต๊ะ/ผู้รับ</th>
+                        <th>เวลาสั่ง</th>
+                        <th class="text-center">ชิ้น</th>
+                        <th class="text-end">ราคารวม</th>
+                        <th>สถานะ</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj.object_list %}
+                    <tr>
+                        <td class="fw-bold">
+                            {{ order.display_code }}
+                            {% if order.order_type == 'delivery' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                <i class="bi bi-scooter"></i> ส่ง
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if order.order_type == 'delivery' %}
+                            <span class="text-brand fw-semibold">🛵 {{ order.delivery.recipient_name|default:'ยังไม่ระบุผู้รับ' }}</span>
+                            {% if order.delivery.phone %}
+                            <div class="small text-muted">{{ order.delivery.phone }}</div>
+                            {% endif %}
+                            {% else %}
+                            🪑 โต๊ะ {{ order.table_number }}
+                            {% endif %}
+                        </td>
+                        <td><small class="text-muted">{{ order.created_at|date:"d/m/Y H:i" }}</small></td>
+                        <td class="text-center">{{ order.item_count }}</td>
+                        <td class="text-end fw-bold text-success">{{ order.total_price }}฿</td>
+                        <td>
+                            {% if order.status == 'open' %}
+                            <span class="badge bg-warning text-dark"><span class="pulse-dot me-1" style="background:#fff;"></span>กำลังทาน</span>
+                            {% elif order.status == 'preparing' %}
+                            <span class="badge bg-info text-white"><i class="bi bi-fire me-1"></i>กำลังเตรียม</span>
+                            {% elif order.status == 'ready' %}
+                            <span class="badge bg-primary"><i class="bi bi-check-circle me-1"></i>พร้อมเสิร์ฟ</span>
+                            {% elif order.status == 'served' %}
+                            <span class="badge bg-success"><i class="bi bi-check2-all me-1"></i>เสิร์ฟแล้ว</span>
+                            {% elif order.status == 'paid' %}
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">✓ ชำระแล้ว</span><br>
+                            <small class="text-muted">{{ order.get_payment_method_display }} · {{ order.paid_at|date:"d/m H:i" }}</small>
+                            {% elif order.status == 'pending' %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="bi bi-hourglass-split me-1"></i>รอดำเนินการ</span>
+                            {% elif order.status == 'confirmed' %}
+                            <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-check-circle me-1"></i>ยืนยันแล้ว</span>
+                            {% elif order.status == 'completed' %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle"><i class="bi bi-check2-all me-1"></i>เสร็จสิ้น</span>
+                            {% elif order.status == 'refunded' %}
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-arrow-counterclockwise me-1"></i>คืนเงิน</span>
+                            {% elif order.status == 'cancelled' %}
+                            <span class="badge bg-secondary"><i class="bi bi-x-circle me-1"></i>ยกเลิก</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end text-nowrap">
+                            {% if order.status == 'served' and user.is_staff %}
+                            <a href="{% url 'order_pay' order.pk %}" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-cash-coin"></i> ชำระ
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-gear"></i> จัดการ
+                            </a>
+                            {% if user.is_staff %}
+                            <a href="{% url 'order_delete' order.pk %}" class="btn btn-sm btn-outline-danger" title="ลบออเดอร์">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.paginator.num_pages > 1 %}
+        <nav aria-label="แบ่งหน้า" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+                {% endif %}
+                {% for num in page_obj.paginator.page_range %}
+                <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                </li>
+                {% endfor %}
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% else %}
+                <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+                {% endif %}
+            </ul>
+            <p class="text-center text-muted small">หน้า {{ page_obj.number }} จาก {{ page_obj.paginator.num_pages }}</p>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="empty-state card shadow-soft text-center">
+            <span class="emoji">🧾</span>
+            <h4 class="fw-bold">ยังไม่มีออเดอร์</h4>
+            <p class="text-muted mb-0">กรอกเลขโต๊ะ (ทานในร้าน) หรือเลือกเดลิเวอร์รี่ ด้านซ้ายเพื่อเปิดออเดอร์แรกของวัน</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var typeSel = document.getElementById('id_order_type');
+    var tableWrap = function () {
+        var el = document.getElementById('id_order_type');
+        if (!el) return null;
+        var field = el.closest('.mb-3');
+        var next = el.closest('form').querySelectorAll('.mb-3');
+        for (var i = 0; i < next.length; i++) {
+            if (next[i].querySelector('#id_table_number')) return next[i];
+        }
+        return null;
+    };
+    function toggleTable() {
+        if (!typeSel) return;
+        var wrap = tableWrap();
+        if (!wrap) return;
+        var isDelivery = typeSel.value === 'delivery';
+        wrap.style.display = isDelivery ? 'none' : '';
+        var input = wrap.querySelector('#id_table_number');
+        if (isDelivery) {
+            input.removeAttribute('required');
+            input.value = '';
+        } else {
+            input.setAttribute('required', 'required');
+        }
+    }
+    if (typeSel) {
+        typeSel.addEventListener('change', toggleTable);
+        toggleTable();
+    }
+});
+</script>
+{% endblock %}

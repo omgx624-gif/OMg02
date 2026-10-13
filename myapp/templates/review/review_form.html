@@ -1,0 +1,77 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}รีวิว {{ menu.name }} - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">⭐</div>
+                <div>
+                    <h1 class="h3 fw-bold mb-0">รีวิว {{ menu.name }}</h1>
+                    <p class="text-muted mb-0">
+                        {% if existing %}แก้ไขรีวิวของคุณ{% else %}แบ่งปันความเห็นของคุณ{% endif %}
+                    </p>
+                </div>
+            </div>
+            <a href="{% url 'menu_detail' menu.pk %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> กลับ
+            </a>
+        </div>
+
+        <div class="card shadow-soft overflow-hidden mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex gap-3 align-items-center mb-3">
+                    {% if menu.image %}
+                    <img src="{{ menu.image.url }}" alt="{{ menu.name }}" style="width:72px;height:72px;object-fit:cover;border-radius:1rem;">
+                    {% else %}
+                    <div class="icon-circle" style="width:72px;height:72px;font-size:1.8rem;">🍛</div>
+                    {% endif %}
+                    <div>
+                        <h5 class="fw-bold mb-1">{{ menu.name }} — ฿{{ menu.price }}</h5>
+                        <div class="text-warning fs-5" style="--bs-star-leaf:auto;">
+                            {% for _ in ""|center:5 %}
+                                {% if forloop.counter <= avg_rating %}<i class="bi bi-star-fill"></i>{% else %}<i class="bi bi-star"></i>{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% for field in form.visible_fields %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label fw-bold">
+                            {{ field.label }}
+                            {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                        <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex gap-2 justify-content-end">
+                        {% if existing %}
+                        <button type="button" class="btn btn-outline-danger me-auto"
+                                onclick="if (confirm('ยืนยันลบรีวิวของคุณ?')) { document.getElementById('review-delete-form').submit(); }">
+                            <i class="bi bi-trash"></i> ลบรีวิว
+                        </button>
+                        {% endif %}
+                        <a href="{% url 'menu_detail' menu.pk %}" class="btn btn-outline-secondary px-4">ยกเลิก</a>
+                        <button type="submit" class="btn btn-gradient px-4">
+                            <i class="bi bi-send"></i> {% if existing %}อัปเดตรีวิว{% else %}ส่งรีวิว{% endif %}
+                        </button>
+                    </div>
+                </form>
+                {% if existing %}
+                <form id="review-delete-form" method="post" action="{% url 'review_delete' existing.pk %}" class="d-none">
+                    {% csrf_token %}
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

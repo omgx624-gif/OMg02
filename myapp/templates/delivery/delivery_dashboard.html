@@ -1,0 +1,292 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}จัดการเดลิเวอร์รี่ - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+<style>
+    .delivery-stat { border: none; border-radius: 1rem; }
+    .delivery-stat .num { font-size: 1.8rem; font-weight: 700; line-height: 1.1; }
+    .delivery-stat .lbl { font-size: .85rem; color: #999; }
+    .delivery-address { max-width: 220px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-3">
+        <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">🛵</div>
+        <div>
+            <h1 class="h3 fw-bold mb-0">จัดการเดลิเวอร์รี่</h1>
+            <p class="text-muted mb-0">ติดตามสถานะออเดอร์เดลิเวอร์รี่ทั้งหมด</p>
+        </div>
+    </div>
+    <a href="{% url 'order_list' %}" class="btn btn-outline-primary">
+        <i class="bi bi-plus-circle"></i> เปิดออเดอร์ใหม่
+    </a>
+</div>
+
+<!-- สรุปสถานะการจัดส่ง -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="card shadow-soft delivery-stat h-100">
+            <div class="card-body">
+                <div class="lbl"><i class="bi bi-hourglass-split text-warning"></i> รอรับงาน</div>
+                <div class="num text-warning">{{ delivery_status_counts.pending }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card shadow-soft delivery-stat h-100">
+            <div class="card-body">
+                <div class="lbl"><i class="bi bi-hand-index-thumb text-primary"></i> รับงานแล้ว</div>
+                <div class="num text-primary">{{ delivery_status_counts.accepted }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card shadow-soft delivery-stat h-100">
+            <div class="card-body">
+                <div class="lbl"><i class="bi bi-fire text-danger"></i> ไปรับอาหาร</div>
+                <div class="num text-danger">{{ delivery_status_counts.picking_up }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card shadow-soft delivery-stat h-100">
+            <div class="card-body">
+                <div class="lbl"><i class="bi bi-scooter text-info"></i> กำลังจัดส่ง</div>
+                <div class="num text-info">{{ delivery_status_counts.out_for_delivery }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card shadow-soft delivery-stat h-100">
+            <div class="card-body">
+                <div class="lbl"><i class="bi bi-check2-circle text-success"></i> จัดส่งแล้ว</div>
+                <div class="num text-success">{{ delivery_status_counts.delivered }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card shadow-soft delivery-stat h-100">
+            <div class="card-body">
+                <div class="lbl"><i class="bi bi-exclamation-triangle text-danger"></i> ยังไม่กรอกข้อมูล</div>
+                <div class="num text-danger">{{ no_info_count }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ค้นหา & กรอง -->
+<div class="card shadow-soft mb-3">
+    <div class="card-body py-2 px-3">
+        <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
+            <div class="input-group input-group-sm" style="max-width:240px;">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="ค้นหารหัส/ชื่อผู้รับ/เบอร์..." value="{{ query }}">
+            </div>
+            <select name="delivery_status" class="form-select form-select-sm" style="max-width:175px;" onchange="this.form.submit()">
+                <option value="">ทุกสถานะจัดส่ง</option>
+                {% for val, label in DELIVERY_STATUS_CHOICES %}
+                <option value="{{ val }}" {% if delivery_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="rider" class="form-select form-select-sm" style="max-width:175px;" onchange="this.form.submit()">
+                <option value="">ไรเดอร์ทั้งหมด</option>
+                {% for rider in riders %}
+                <option value="{{ rider.username }}" {% if rider_filter == rider.username %}selected{% endif %}>
+                    {{ rider.first_name|default:rider.username }}
+                </option>
+                {% endfor %}
+            </select>
+            <select name="status" class="form-select form-select-sm" style="max-width:170px;" onchange="this.form.submit()">
+                <option value="">ทุกสถานะออเดอร์</option>
+                {% for val, label in ORDER_STATUS_CHOICES %}
+                <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-funnel"></i> ค้นหา
+            </button>
+            {% if query or status_filter or delivery_filter or rider_filter %}
+            <a href="{% url 'delivery_dashboard' %}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-x-lg"></i> ล้าง
+            </a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{% if page_obj.object_list %}
+<div class="table-responsive card shadow-soft">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="bg-light">
+            <tr>
+                <th>ออเดอร์</th>
+                <th>ผู้รับ</th>
+                <th>ที่อยู่ & เบอร์</th>
+                <th class="text-center">ชิ้น</th>
+                <th class="text-end">ยอดรวม</th>
+                <th>สถานะออเดอร์</th>
+                <th>สถานะจัดส่ง</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in page_obj.object_list %}
+            <tr>
+                <td class="fw-bold">
+                    {{ order.display_code }}
+                    <div class="small text-muted">{{ order.created_at|date:"d/m H:i" }}</div>
+                </td>
+                <td>
+                    {% if order.delivery %}
+                    <div class="fw-semibold"><i class="bi bi-person-fill text-brand"></i> {{ order.delivery.recipient_name }}</div>
+                    <div class="small text-muted"><i class="bi bi-telephone"></i> {{ order.delivery.phone }}</div>
+                    {% else %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">ยังไม่กรอกข้อมูล</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if order.delivery %}
+                    <small class="text-muted delivery-address d-block">
+                        <i class="bi bi-geo-alt-fill"></i> {{ order.delivery.address|truncatechars:70 }}
+                    </small>
+                    {% if order.delivery.rider_name %}
+                    <small class="d-block mt-1"><i class="bi bi-person-wheelchair"></i> ไรเดอร์: <strong>{{ order.delivery.rider_name }}</strong></small>
+                    {% endif %}
+                    {% else %}
+                    <small class="text-muted">-</small>
+                    {% endif %}
+                </td>
+                <td class="text-center">{{ order.item_count }}</td>
+                <td class="text-end fw-bold text-success">
+                    {{ order.total_price }}฿
+                    <div class="small text-muted fw-normal">+ ส่ง {{ order.delivery_fee }}฿</div>
+                </td>
+                <td>
+                    {% if order.status == 'pending' %}
+                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle"><i class="bi bi-hourglass-split"></i> รอดำเนินการ</span>
+                    {% elif order.status == 'confirmed' %}
+                    <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="bi bi-check-circle"></i> ยืนยันแล้ว</span>
+                    {% elif order.status == 'preparing' %}
+                    <span class="badge bg-info text-white"><i class="bi bi-fire"></i> กำลังเตรียม</span>
+                    {% elif order.status == 'ready' %}
+                    <span class="badge bg-primary"><i class="bi bi-check-circle"></i> พร้อมส่ง</span>
+                    {% elif order.status == 'served' %}
+                    <span class="badge bg-success"><i class="bi bi-check2-all"></i> จัดส่งแล้ว</span>
+                    {% elif order.status == 'paid' %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">✓ ชำระแล้ว</span>
+                    {% elif order.status == 'cancelled' %}
+                    <span class="badge bg-secondary">ยกเลิก</span>
+                    {% elif order.status == 'refunded' %}
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">คืนเงิน</span>
+                    {% elif order.status == 'completed' %}
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">เสร็จสิ้น</span>
+                    {% else %}
+                    <span class="badge bg-secondary">{{ order.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if order.delivery %}
+                    <span class="badge
+                        {% if order.delivery.status == 'pending' %}bg-warning-subtle text-warning border border-warning-subtle
+                        {% elif order.delivery.status == 'out_for_delivery' %}bg-info-subtle text-info border border-info-subtle
+                        {% elif order.delivery.status == 'delivered' %}bg-success-subtle text-success border border-success-subtle
+                        {% else %}bg-secondary-subtle text-secondary border border-secondary-subtle{% endif %}">
+                        {{ order.delivery.get_status_display }}
+                    </span>
+                    {% if order.delivery.delivered_at %}
+                    <div class="small text-muted">{{ order.delivery.delivered_at|date:"d/m H:i" }}</div>
+                    {% endif %}
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td class="text-end text-nowrap">
+                    {% if order.delivery %}
+                    {% if order.delivery.status in 'pending accepted' %}
+                    <form method="post" action="{% url 'delivery_assign_rider' order.delivery.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <select name="rider_id" class="form-select form-select-sm d-inline-block mb-1" style="width:150px;"
+                                onchange="if(this.value){this.form.submit();}">
+                            <option value="">กำหนดไรเดอร์...</option>
+                            {% for rider in riders %}
+                            <option value="{{ rider.pk }}">{{ rider.first_name|default:rider.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                    <br>
+                    {% endif %}
+                    {% if order.delivery.status != 'delivered' %}
+                    <form method="post" action="{% url 'delivery_update_status' order.delivery.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <select name="delivery_status" class="form-select form-select-sm d-inline-block" style="width:auto;"
+                                onchange="if(this.value){this.form.submit();}">
+                            <option value="">เปลี่ยนสถานะส่ง...</option>
+                            {% for val, label in DELIVERY_STATUS_CHOICES %}
+                            {% if val != order.delivery.status %}
+                            <option value="{{ val }}">{{ label }}</option>
+                            {% endif %}
+                            {% endfor %}
+                        </select>
+                    </form>
+                    {% if not order.delivery.distance_km %}
+                    <form method="post" action="{% url 'delivery_calc_fee' order.delivery.pk %}" class="d-inline ms-1" title="คำนวณระยะทาง + ค่าส่งอัตโนมัติ">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-calculator"></i> คำนวณค่าส่ง
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if order.delivery.address and not order.delivery.recipient_lat %}
+                    <form method="post" action="{% url 'delivery_geocode' order.delivery.pk %}" class="d-inline ms-1" title="ค้นหาพิกัดจากที่อยู่จัดส่ง (API ภายนอก OpenStreetMap)">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'delivery_dashboard' %}">
+                        <button type="submit" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-geo-alt"></i> ค้นหาพิกัดที่อยู่
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
+                    <a href="{% url 'order_detail' order.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-gear"></i> จัดการ
+                    </a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="แบ่งหน้า" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+        </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="empty-state card shadow-soft text-center">
+    <span class="emoji">🛵</span>
+    <h4 class="fw-bold">ยังไม่มีออเดอร์เดลิเวอร์รี่</h4>
+    <p class="text-muted mb-0">เปิดออเดอร์ใหม่และเลือกประเภท "เดลิเวอร์รี่" เพื่อเริ่มต้น</p>
+</div>
+{% endif %}
+{% endblock %}

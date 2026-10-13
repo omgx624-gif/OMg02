@@ -1,0 +1,364 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}{{ title }} - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+    <style>
+        .form-section {
+            border: none;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+        .form-section .card-header {
+            border-bottom: 1px solid #f0ebe6;
+        }
+        .section-icon {
+            width: 42px; height: 42px;
+            border-radius: .7rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .switch-card {
+            border: 2px solid #eee;
+            border-radius: .8rem;
+            padding: 1rem 1.25rem;
+            transition: all .2s;
+        }
+        .switch-card:hover { border-color: #ffc9a3; }
+        .switch-card:has(input:checked) {
+            border-color: var(--brand-red);
+            background: linear-gradient(135deg, #fff6f2, #ffece8);
+        }
+        .avatar-preview {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 8px 24px rgba(255, 94, 98, .2);
+        }
+        .avatar-placeholder-lg {
+            width: 120px; height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fff1e6, #ffddd5);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--brand-red);
+            border: 4px solid #fff;
+            box-shadow: 0 8px 24px rgba(255, 94, 98, .2);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <div class="icon-circle" style="width:56px;height:56px;font-size:1.5rem;">
+                    {% if 'เพิ่ม' in title %}👤{% else %}✏️{% endif %}
+                </div>
+                <div>
+                    <h1 class="h3 fw-bold mb-0">{{ title }}</h1>
+                    <p class="text-muted mb-0">
+                        {% if 'เพิ่ม' in title %}กรอกข้อมูลพนักงานใหม่{% else %}แก้ไขข้อมูลของ {{ target.username }}{% endif %}
+                    </p>
+                </div>
+            </div>
+            <a href="{% url 'user_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> กลับ
+            </a>
+        </div>
+
+        {% if form.errors %}
+        <div class="alert alert-danger d-flex align-items-center gap-2 mb-4">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span><strong>พบข้อผิดพลาด:</strong> กรุณาตรวจสอบช่องที่มีเครื่องหมายสีแดง</span>
+        </div>
+        {% endif %}
+
+        <form method="post" novalidate enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- รูปโปรไฟล์ -->
+            <div class="card shadow-soft form-section mb-4">
+                <div class="card-header bg-white px-4 py-3 d-flex align-items-center gap-2">
+                    <div class="section-icon" style="background:#fff3e6;color:#ff9966;">
+                        <i class="bi bi-camera-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">รูปโปรไฟล์</h5>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                    <div class="d-flex align-items-center gap-4 flex-wrap">
+                        <div class="text-center">
+                            {% if target and target.profile.avatar %}
+                            <img src="{{ target.profile.avatar.url }}" alt="avatar" class="avatar-preview mb-2" id="avatarPreview">
+                            {% else %}
+                            <div class="avatar-placeholder-lg mb-2" id="avatarPreviewPlaceholder">
+                                {% if target %}{{ target.username|first|upper }}{% else %}?{% endif %}
+                            </div>
+                            <img src="" alt="avatar" class="avatar-preview mb-2 d-none" id="avatarPreview">
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            {% with field=form.avatar %}
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                            <div class="form-text">รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 10 MB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ข้อมูลพื้นฐาน -->
+            <div class="card shadow-soft form-section mb-4">
+                <div class="card-header bg-white px-4 py-3 d-flex align-items-center gap-2">
+                    <div class="section-icon" style="background:#e3f2fd;color:#1976d2;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">ข้อมูลพื้นฐาน</h5>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {% with field=form.username %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <div class="col-md-6">
+                            {% with field=form.email %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <div class="col-md-6">
+                            {% with field=form.first_name %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <div class="col-md-6">
+                            {% with field=form.last_name %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- รหัสผ่าน -->
+            {% if form.password1 %}
+            <div class="card shadow-soft form-section mb-4">
+                <div class="card-header bg-white px-4 py-3 d-flex align-items-center gap-2">
+                    <div class="section-icon" style="background:#fff3e6;color:#ff9966;">
+                        <i class="bi bi-key-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">รหัสผ่าน</h5>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {% with field=form.password1 %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        <div class="col-md-6">
+                            {% with field=form.password2 %}
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ field }}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- รหัสผ่านใหม่ (กรณีแก้ไข) -->
+            {% if form.new_password %}
+            <div class="card shadow-soft form-section mb-4">
+                <div class="card-header bg-white px-4 py-3 d-flex align-items-center gap-2">
+                    <div class="section-icon" style="background:#fff3e6;color:#ff9966;">
+                        <i class="bi bi-key-fill"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">เปลี่ยนรหัสผ่าน</h5>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                    {% with field=form.new_password %}
+                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                    <div class="form-text">{{ field.help_text }}</div>
+                    {% endif %}
+                    {% for error in field.errors %}
+                    <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                    {% endfor %}
+                    {% endwith %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- สถานะสมาชิก -->
+            {% if form.membership_status and not form.membership_status.is_hidden %}
+            <div class="card shadow-soft form-section mb-4">
+                <div class="card-header bg-white px-4 py-3 d-flex align-items-center gap-2">
+                    <div class="section-icon" style="background:#fff8e1;color:#ffb300;">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">สถานะสมาชิก</h5>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            {% with field=form.membership_status %}
+                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- สิทธิ์การใช้งาน -->
+            <div class="card shadow-soft form-section mb-4">
+                <div class="card-header bg-white px-4 py-3 d-flex align-items-center gap-2">
+                    <div class="section-icon" style="background:#e8f5e9;color:#388e3c;">
+                        <i class="bi bi-shield-check"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0">สิทธิ์การใช้งาน</h5>
+                </div>
+                <div class="card-body px-4 pb-4 pt-3">
+                    <div class="row g-3">
+                        {% if form.is_staff %}
+                        <div class="col-md-6">
+                            {% with field=form.is_staff %}
+                            <label class="switch-card d-flex align-items-center gap-3 w-100">
+                                {{ field }}
+                                <div>
+                                    <div class="fw-bold">{{ field.label }}</div>
+                                    <small class="text-muted">เข้าถึงหน้าจัดการเมนู ผู้ใช้ และออเดอร์ทั้งหมด</small>
+                                </div>
+                            </label>
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        {% endif %}
+                        {% if form.is_superuser %}
+                        <div class="col-md-6">
+                            {% with field=form.is_superuser %}
+                            <label class="switch-card d-flex align-items-center gap-3 w-100">
+                                {{ field }}
+                                <div>
+                                    <div class="fw-bold">{{ field.label }}</div>
+                                    <small class="text-muted">สิทธิ์ผู้ดูแลระบบ (Superuser) — จัดการได้ทั้งหมด รวมทั้งพนักงาน</small>
+                                </div>
+                            </label>
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            {% with field=form.is_active %}
+                            <label class="switch-card d-flex align-items-center gap-3 w-100">
+                                {{ field }}
+                                <div>
+                                    <div class="fw-bold">{{ field.label }}</div>
+                                    <small class="text-muted">เปิดให้เข้าสู่ระบบและใช้งานระบบได้</small>
+                                </div>
+                            </label>
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1"><strong>{{ error }}</strong></div>
+                            {% endfor %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end">
+                <a href="{% url 'user_list' %}" class="btn btn-outline-secondary px-4">ยกเลิก</a>
+                <button type="submit" class="btn btn-gradient px-4">
+                    <i class="bi bi-save"></i> บันทึกข้อมูล
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('{{ form.avatar.id_for_label }}');
+    const preview = document.getElementById('avatarPreview');
+    const placeholder = document.getElementById('avatarPreviewPlaceholder');
+    if (input) {
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.classList.remove('d-none');
+                    if (placeholder) placeholder.classList.add('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

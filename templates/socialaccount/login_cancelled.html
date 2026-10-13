@@ -1,0 +1,16 @@
+{% extends "socialaccount/base_entrance.html" %}
+{% load i18n %}
+{% block head_title %}ยกเลิกการเข้าสู่ระบบ{% endblock head_title %}
+{% block content %}
+    <div class="text-center">
+        <div style="font-size: 3rem;">🙅</div>
+        <h3 class="mt-2">ยินดีต้อนรับ</h3>
+        <p class="text-muted mt-2">
+            คุณได้ยกเลิกการเข้าสู่ระบบด้วยบัญชีภายนอกแล้ว
+            ถ้าเป็นการผิดพลาด คุณสามารถเข้าสู่ระบบใหม่ได้ที่ปุ่มด้านล่าง
+        </p>
+        <a href="{% url 'login' %}" class="btn-restaurant mt-3">
+            <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
+        </a>
+    </div>
+{% endblock content %}

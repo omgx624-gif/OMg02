@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Django
+*.sqlite3
+*.sqlite3-journal
+media/
+staticfiles/
+.env
+*.env
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temp files
+smoke_test.py
+smoke_test_order.py
+*.log
+
+# Ruff cache
+.ruff_cache/
+
+# Debug/prototype dump files
+dump*.py
+dump*.txt
+dump*.pdf

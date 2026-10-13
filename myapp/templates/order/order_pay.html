@@ -1,0 +1,167 @@
+{% extends 'core/basetemplate.html' %}
+
+{% block title %}ชำระเงิน {% if order.order_type == 'delivery' %}เดลิเวอร์รี่{% else %}โต๊ะ {{ order.table_number }}{% endif %} - ร้านอร่อยเกินเบอร์{% endblock %}
+
+{% block extra_style %}
+    <style>
+        label.pay-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 2px solid #ece7e2;
+            border-radius: 1rem;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            background: #fff;
+            transition: all .2s ease;
+        }
+        label.pay-card:hover { border-color: #ffc9a3; transform: translateY(-2px); }
+        label.pay-card input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--brand-red);
+            flex-shrink: 0;
+        }
+        label.pay-card .pay-icon {
+            font-size: 1.8rem;
+            width: 52px;
+            height: 52px;
+            border-radius: .8rem;
+            background: linear-gradient(135deg, #fff1e6, #ffddd5);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        label.pay-card:has(input:checked) {
+            border-color: var(--brand-red);
+            background: linear-gradient(135deg, #fff6f2, #ffece8);
+            box-shadow: 0 8px 20px rgba(255, 94, 98, .18);
+        }
+        .bill-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .55rem 0;
+        }
+        .bill-row + .bill-row { border-top: 1px dashed #eee; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-soft overflow-hidden">
+            <div class="card-header bg-grad text-white border-0 p-4 text-center">
+                <h4 class="mb-1 fw-bold">💰 ชำระเงิน</h4>
+                <p class="mb-0 opacity-75">
+                    {% if order.order_type == 'delivery' %}
+                    🛵 เดลิเวอร์รี่ — ออเดอร์ {{ order.display_code }}
+                    {% else %}
+                    🪑 โต๊ะ {{ order.table_number }} — ออเดอร์ {{ order.display_code }}
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <div class="row g-4">
+                    <!-- สรุปบิล -->
+                    <div class="col-md-6">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-receipt text-brand"></i> สรุปบิล</h5>
+                        <div class="bg-light rounded-3 px-4 py-3 mb-3">
+                            {% for item in order.items.all %}
+                            <div class="bill-row">
+                                <span>{{ item.menu.name }} <small class="text-muted">x{{ item.quantity }}</small></span>
+                                <span class="fw-medium">{{ item.subtotal }}฿</span>
+                            </div>
+                            {% endfor %}
+                            {% if order.order_type == 'delivery' %}
+                            <div class="bill-row">
+                                <span>🚚 ค่าจัดส่ง</span>
+                                <span class="fw-medium">{{ order.delivery_fee }}฿</span>
+                            </div>
+                            {% endif %}
+                            {% if order.discount_amount > 0 %}
+                            <div class="bill-row text-success fw-bold">
+                                <span>🎁 ส่วนลดสมาชิก ({{ order.membership_discount_percent }}%)</span>
+                                <span>-{{ order.discount_amount }}฿</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center py-3 rounded-3 bg-white shadow-sm">
+                            <div class="text-muted small">ยอดรวมทั้งหมด ({{ order.item_count }} ชิ้น)</div>
+                            <div class="fs-2 fw-bold text-gradient">{{ order.discounted_total }} <span class="fs-5">บาท</span></div>
+                        </div>
+                    </div>
+
+                    <!-- เลือกวิธีชำระ -->
+                    <div class="col-md-6">
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            <h5 class="fw-bold mb-3"><i class="bi bi-credit-card-2-front text-brand"></i> เลือกวิธีชำระเงิน</h5>
+
+                            <label class="pay-card">
+                                <input type="radio" name="method" value="cash" required>
+                                <span class="pay-icon">💵</span>
+                                <span>
+                                    <span class="d-block fw-bold">เงินสด</span>
+                                    <small class="text-muted">จ่ายที่เคาน์เตอร์</small>
+                                </span>
+                            </label>
+                            <label class="pay-card">
+                                <input type="radio" name="method" value="transfer" required>
+                                <span class="pay-icon">🏦</span>
+                                <span>
+                                    <span class="d-block fw-bold">โอนเงิน</span>
+                                    <small class="text-muted">ผ่านแอปธนาคาร / Mobile Banking</small>
+                                </span>
+                            </label>
+                            <label class="pay-card">
+                                <input type="radio" name="method" value="qr" required>
+                                <span class="pay-icon">📱</span>
+                                <span>
+                                    <span class="d-block fw-bold">QR PromptPay</span>
+                                    <small class="text-muted">สแกนจ่ายได้ทุกธนาคาร</small>
+                                </span>
+                            </label>
+
+                            <div id="qr-panel" class="d-none text-center my-3">
+                                {% if qr_enabled and qr_data %}
+                                <div class="alert alert-light border shadow-sm p-3">
+                                    <img src="{{ qr_data }}" alt="QR PromptPay" style="max-width:230px;width:100%;border-radius:.75rem;">
+                                    <div class="fw-bold mt-2 text-brand">สแกนจ่าย {{ order.discounted_total }} บาท</div>
+                                    <small class="text-muted">QR นี้พร้อมใช้แค่ยอดนี้ (เปิดใหม่เมื่อยอดเปลี่ยน)</small>
+                                </div>
+                                {% else %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                    ร้านยังไม่ได้ตั้งค่า PromptPay ID ในหน้าการตั้งค่าร้าน จึงไม่แสดง QR กรุณาใช้วิธีอื่นหรือแจ้งพนักงาน
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" class="btn btn-gradient w-100 py-3 fs-5 mt-3">
+                                <i class="bi bi-check2-circle"></i> ยืนยันการชำระเงิน
+                            </button>
+                        </form>
+                        <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary w-100 mt-2">
+                            <i class="bi bi-arrow-left"></i> กลับไปหน้าออเดอร์
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+    // โชว์ QR เมื่อเลือกวิธีชำระเป็น PromptPay
+    document.querySelectorAll('input[name="method"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const qrPanel = document.getElementById('qr-panel');
+            if (qrPanel) qrPanel.classList.toggle('d-none', radio.value !== 'qr');
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,544 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ร้านผัดกะเพรารวมมิตร{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍛</text></svg>">
+    <meta name="description" content="{% block meta_description %}ร้านผัดกะเพรารวมมิตร อร่อยเกินเบอร์ — เมนูผัดกะเพราสูตรเด็ด วัตถุดิบสดใหม่ บริการเดลิเวอรี่และสั่งอาหารออนไลน์{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}ร้านผัดกะเพรารวมมิตร — อร่อยเกินเบอร์{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}ผัดกะเพราเผ็ดร้อนที่สุดในสามโลก วัตถุดิบสดใหม่ทุกวัน{% endblock %}">
+    <meta property="og:type" content="website">
+
+    <style>
+        :root {
+            --brand-orange: #ff9966;
+            --brand-red: #ff5e62;
+            --brand-gradient: linear-gradient(135deg, var(--brand-orange), var(--brand-red));
+        }
+
+        * { font-family: 'Prompt', sans-serif; }
+
+        body {
+            background-color: #faf6f3;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* ---------- Navbar ---------- */
+        .navbar {
+            background: linear-gradient(90deg, #26221f, #3b3530);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, .18);
+        }
+        .brand-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            background: var(--brand-gradient);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 12px rgba(255, 94, 98, .45);
+        }
+        .navbar-nav .nav-link { position: relative; margin-inline: .15rem; }
+        .navbar-nav .nav-link::after {
+            content: '';
+            position: absolute;
+            left: .7rem;
+            right: .7rem;
+            bottom: .2rem;
+            height: 2px;
+            border-radius: 2px;
+            background: #ffb88c;
+            transform: scaleX(0);
+            transition: transform .25s ease;
+        }
+        .navbar-nav .nav-link:hover::after,
+        .navbar-nav .nav-link.active::after { transform: scaleX(1); }
+        .navbar-nav .nav-link.active { color: #ffc371 !important; font-weight: 600; }
+
+        /* ---------- Cards & helpers ---------- */
+        .card { border: none; border-radius: 1rem; }
+        .shadow-soft { box-shadow: 0 8px 24px rgba(60, 40, 30, .08) !important; }
+        .hover-lift { transition: transform .25s ease, box-shadow .25s ease; }
+        .hover-lift:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 16px 32px rgba(60, 40, 30, .16) !important;
+        }
+        .icon-circle {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.1rem;
+            background: linear-gradient(135deg, #fff1e6, #ffddd5);
+            box-shadow: inset 0 0 0 1px rgba(255, 94, 98, .15), 0 6px 14px rgba(255, 94, 98, .15);
+        }
+        .icon-circle.icon-danger {
+            background: linear-gradient(135deg, #ffe9e9, #ffd4d4);
+            box-shadow: inset 0 0 0 1px rgba(220, 53, 69, .12), 0 6px 14px rgba(220, 53, 69, .15);
+        }
+        .page-title { font-weight: 700; }
+        .text-brand { color: var(--brand-red); }
+        .text-gradient {
+            background: var(--brand-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .bg-grad { background: var(--brand-gradient); }
+
+        /* ---------- Buttons / Forms / Badges ---------- */
+        .btn { border-radius: .8rem; font-weight: 600; }
+        .btn-gradient {
+            color: #fff;
+            background: var(--brand-gradient);
+            border: none;
+            box-shadow: 0 6px 16px rgba(255, 94, 98, .35);
+        }
+        .btn-gradient:hover {
+            color: #fff;
+            filter: brightness(1.06);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(255, 94, 98, .45);
+        }
+        .form-control, .form-select {
+            border-radius: .75rem;
+            padding: .65rem 1rem;
+            border-color: #ece7e2;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--brand-orange);
+            box-shadow: 0 0 0 4px rgba(255, 153, 102, .15);
+        }
+        .form-label { font-weight: 600; color: #555; }
+        .badge { border-radius: .55rem; padding: .45em .75em; font-weight: 600; }
+
+        /* ---------- Alerts / Pagination / Tables ---------- */
+        .alert { border: none; border-radius: .9rem; }
+        .pagination { gap: .3rem; }
+        .page-link { border: none; border-radius: .65rem !important; color: #666; font-weight: 500; }
+        .page-item.active .page-link { background: var(--brand-red); color: #fff; }
+        .page-link:focus { box-shadow: 0 0 0 3px rgba(255, 94, 98, .2); }
+        .table thead th {
+            font-size: .8rem;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: #9a938d;
+            border-bottom: 2px solid #efe9e4 !important;
+        }
+
+        /* ---------- Empty state ---------- */
+        .empty-state { padding: 3.5rem 1rem; }
+        .empty-state .emoji { display: block; font-size: 4rem; margin-bottom: .5rem; }
+
+        /* ---------- Menu cards ---------- */
+        .menu-img {
+            height: 200px;
+            width: 100%;
+            object-fit: cover;
+            transition: transform .45s ease;
+        }
+        .menu-card { overflow: hidden; }
+        .menu-card:hover .menu-img { transform: scale(1.08); }
+        .menu-placeholder {
+            height: 200px;
+            font-size: 4rem;
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+        }
+        .price-tag { font-size: 1.35rem; font-weight: 700; }
+
+        /* ---------- Misc ---------- */
+        .pulse-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #ffc107;
+            display: inline-block;
+            position: relative;
+        }
+        .pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid #ffc107;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            from { transform: scale(.55); opacity: .8; }
+            to { transform: scale(1.3); opacity: 0; }
+        }
+        footer {
+            background: linear-gradient(90deg, #26221f, #3b3530);
+            color: #d8d2cc;
+            border-top: 3px solid transparent;
+            border-image: linear-gradient(90deg, var(--brand-orange), var(--brand-red)) 1;
+        }
+
+        /* ---------- User dropdown ---------- */
+        .user-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            background: rgba(255, 255, 255, .08);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 999px;
+            padding: .25rem .75rem .25rem .3rem;
+            color: #fff;
+            font-weight: 600;
+            font-size: .95rem;
+            transition: all .2s ease;
+        }
+        .user-toggle:hover,
+        .user-toggle.show {
+            background: rgba(255, 255, 255, .16);
+            color: #ffc371;
+        }
+        .user-toggle::after { margin-left: .15rem; }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--brand-gradient);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .9rem;
+            font-weight: 700;
+            color: #fff;
+            box-shadow: 0 3px 8px rgba(255, 94, 98, .4);
+        }
+        .dropdown-menu {
+            border: none;
+            border-radius: .9rem;
+            box-shadow: 0 14px 36px rgba(40, 20, 10, .18);
+            padding: .5rem;
+            margin-top: .6rem !important;
+        }
+        .dropdown-header {
+            font-size: .78rem;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #a89f97;
+        }
+        .dropdown-item {
+            border-radius: .6rem;
+            padding: .55rem .9rem;
+            font-weight: 500;
+        }
+        .dropdown-item:hover {
+            background: #fff3ef;
+            color: var(--brand-red);
+        }
+    </style>
+    {% block extra_style %}{% endblock %}
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="{% url 'home' %}">
+                <span class="brand-logo">🍛</span> อร่อยเกินเบอร์
+            </a>
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false"
+                    aria-label="เปิด/ปิดเมนู">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-lg-center">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">หน้าหลัก</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/menu' in request.path and '/add' not in request.path and '/edit' not in request.path %}active{% endif %}" href="{% url 'menu_list' %}">รายการเมนู</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/orders' in request.path and '/my-orders' not in request.path %}active{% endif %} text-warning fw-bold" href="{% url 'order_list' %}">
+                            สั่งอาหาร
+                            {% if user.is_staff and staff_new_orders %}
+                            <span class="badge bg-danger ms-1" title="มีออเดอร์ต้องดูแล {{ staff_new_orders }} รายการ">
+                                <i class="bi bi-bell-fill"></i> {{ staff_new_orders }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% if user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/delivery' in request.path %}active{% endif %}" href="{% url 'delivery_dashboard' %}">
+                            <i class="bi bi-scooter me-1"></i> เดลิเวอร์รี่
+                            {% if staff_delivery_orders %}
+                            <span class="badge bg-info ms-1" title="ออเดอร์เดลิเวอร์รี่ที่ต้องจัดการ {{ staff_delivery_orders }} รายการ">
+                                {{ staff_delivery_orders }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/delivery' in request.path and '/rider' not in request.path %}active{% endif %}" href="{% url 'delivery_home' %}">
+                            <i class="bi bi-scooter me-1"></i> เดลิเวอร์รี่
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.is_authenticated and user.profile.is_rider %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/delivery/rider' in request.path %}active{% endif %}" href="{% url 'rider_dashboard' %}">
+                            <i class="bi bi-person-wheelchair me-1"></i> ไรเดอร์
+                            {% if rider_available_jobs %}
+                            <span class="badge bg-danger ms-1" title="งานใหม่ที่รอรับ {{ rider_available_jobs }} รายการ">
+                                <i class="bi bi-bell-fill"></i> {{ rider_available_jobs }}
+                            </span>
+                            {% elif rider_my_active %}
+                            <span class="badge bg-info ms-1" title="งานที่กำลังทำ {{ rider_my_active }} รายการ">
+                                {{ rider_my_active }}
+                            </span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/reserve' in request.path or '/my-reservations' in request.path %}active{% endif %}" href="{% url 'reservation_create' %}">
+                            <i class="bi bi-calendar-check me-1"></i> จองโต๊ะ
+                        </a>
+                    </li>
+                    {% if user.is_staff %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/kitchen' in request.path %}active{% endif %} text-warning fw-bold" href="{% url 'kitchen_display' %}">
+                            <i class="bi bi-fire me-1"></i> หน้าจอครัว
+                            {% if staff_kitchen_orders %}
+                            <span class="badge bg-warning text-dark ms-1">{{ staff_kitchen_orders }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link position-relative" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false" title="การแจ้งเตือน">
+                            <i class="bi bi-bell-fill" style="font-size:1.1rem;"></i>
+                            {% if unread_count %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                  style="font-size:.6rem;">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" style="min-width:320px;max-height:420px;overflow-y:auto;">
+                            <li class="dropdown-header d-flex justify-content-between align-items-center pe-3">
+                                <span><i class="bi bi-bell-fill me-1"></i> การแจ้งเตือน</span>
+                                <a href="{% url 'notifications_center' %}" class="small text-brand">ดูทั้งหมด</a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            {% if nav_notifications %}
+                                {% for n in nav_notifications %}
+                                <li>
+                                    <a class="dropdown-item d-flex align-items-start gap-2 {% if not n.is_read %}bg-warning-subtle{% endif %}"
+                                       href="{% url 'notification_redirect' n.pk %}">
+                                        <span class="badge bg-secondary mt-1">{{ n.get_kind_display }}</span>
+                                        <span class="flex-grow-1">
+                                            <span class="fw-bold d-block">{{ n.title }}</span>
+                                            <span class="small text-muted">{{ n.message }}</span>
+                                        </span>
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li><span class="dropdown-item text-muted">ไม่มีการแจ้งเตือน</span></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/education' in request.path %}active{% endif %}" href="{% url 'education' %}">ประวัติการศึกษา</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/contact' in request.path %}active{% endif %}" href="{% url 'contact' %}">ติดต่อสอบถาม</a>
+                    </li>
+
+                    {% if user.is_staff %}
+                    <li class="nav-item"><hr class="border-secondary my-1 mx-2" style="width:1px;height:24px;opacity:.4;"></li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-bold" href="#" role="button"
+                           data-bs-toggle="dropdown" aria-expanded="false"
+                           style="color:#ffc371;">
+                            <i class="bi bi-shield-lock-fill me-1"></i> ส่วนจัดการ
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header"><i class="bi bi-tools me-1"></i> เมนูผู้ดูแลระบบ</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'dashboard' %}">
+                                    <i class="bi bi-speedometer2 me-2 text-brand"></i> Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'delivery_dashboard' %}">
+                                    <i class="bi bi-scooter me-2 text-brand"></i> จัดการเดลิเวอร์รี่
+                                    {% if staff_delivery_orders %}
+                                    <span class="badge bg-info ms-1">{{ staff_delivery_orders }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'menu_create' %}">
+                                    <i class="bi bi-plus-circle-fill me-2 text-brand"></i> เพิ่มเมนูใหม่
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'category_list' %}">
+                                    <i class="bi bi-folder-fill me-2 text-brand"></i> จัดการหมวดหมู่
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'addon_list' %}">
+                                    <i class="bi bi-plus-circle-fill me-2 text-brand"></i> การเพิ่มเครื่องเคียง
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'inventory_dashboard' %}">
+                                    <i class="bi bi-box-seam-fill me-2 text-brand"></i> สต็อกวัตถุดิบ
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'coupon_list' %}">
+                                    <i class="bi bi-ticket-perforated-fill me-2 text-brand"></i> จัดการคูปอง
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'reservation_dashboard' %}">
+                                    <i class="bi bi-calendar-check-fill me-2 text-brand"></i> จัดการการจองโต๊ะ
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'user_list' %}">
+                                    <i class="bi bi-people-fill me-2 text-brand"></i> จัดการผู้ใช้
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'automation_settings' %}">
+                                    <i class="bi bi-lightning-charge-fill me-2 text-brand"></i> ตั้งค่าระบบอัตโนมัติ
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{% url 'notifications_center' %}">
+                                    <i class="bi bi-bell-fill me-2 text-brand"></i> การแจ้งเตือน
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item fw-bold" href="{% url 'order_list' %}">
+                                    <i class="bi bi-qr-code me-2 text-brand"></i> QR โต๊ะ & ใบเสร็จ
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown ms-lg-2 mt-2 mt-lg-0">
+                            <a class="user-toggle dropdown-toggle" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="avatar" loading="lazy" decoding="async"
+                                     style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,255,255,.5);">
+                                {% else %}
+                                <span class="user-avatar">{{ user.username|first|upper }}</span>
+                                {% endif %}
+                                {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">เข้าสู่ระบบเป็น: {{ user.username }}</h6></li>
+                                <li>
+                                    <div class="dropdown-item d-flex justify-content-between align-items-center">
+                                        <span><i class="bi bi-coin me-2 text-warning"></i> คะแนนสะสม</span>
+                                        <span class="badge text-bg-warning">{{ user.profile.points }} <small>คะแนน</small></span>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'user_profile' %}">
+                                        <i class="bi bi-person-fill me-2 text-brand"></i> โปรไฟล์ของฉัน
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'user_order_history' %}">
+                                        <i class="bi bi-clock-history me-2 text-brand"></i> ประวัติสั่งอาหาร
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'points_redemption' %}">
+                                        <i class="bi bi-gift-fill me-2 text-warning"></i> แลกคะแนนเป็นสิทธิ์
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger fw-bold" href="{% url 'logout' %}">
+                                        <i class="bi bi-box-arrow-right me-2"></i> ออกจากระบบ
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item ms-lg-2 mt-2 mt-lg-0">
+                            <a class="btn btn-outline-warning btn-sm fw-bold px-3 me-2" href="{% url 'register' %}">
+                                <i class="bi bi-person-plus-fill"></i> สมัครสมาชิก
+                            </a>
+                            <a class="btn btn-warning btn-sm fw-bold text-dark px-3" href="{% url 'login' %}">
+                                <i class="bi bi-box-arrow-in-right"></i> เข้าสู่ระบบ
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-4 my-md-5 flex-grow-1">
+        {% if messages %}
+            {% for message in messages %}
+                {% if message.tags == 'success' %}
+                    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-check-circle-fill fs-5"></i> {{ message }}
+                {% elif message.tags == 'error' %}
+                    <div class="alert alert-danger alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill fs-5"></i> {{ message }}
+                {% elif message.tags == 'warning' %}
+                    <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-exclamation-circle-fill fs-5"></i> {{ message }}
+                {% else %}
+                    <div class="alert alert-info alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+                        <i class="bi bi-info-circle-fill fs-5"></i> {{ message }}
+                {% endif %}
+                        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+            {% endfor %}
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="text-center py-4 mt-auto">
+        <p class="mb-1 fw-bold text-white">🍛 ร้านผัดกะเพรารวมมิตร</p>
+        <p class="mb-0 small">© 2026 — พัฒนาโดย นักศึกษา KPRU</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

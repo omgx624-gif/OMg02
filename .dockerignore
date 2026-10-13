@@ -1,0 +1,26 @@
+# ไม่ส่งไฟล์เหล่านี้เข้า build context
+.git
+.gitignore
+.env
+.env.*
+*.sqlite3
+*.sqlite3-journal
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+
+# ข้อมูลที่เปลี่ยนแปลงระหว่างรัน — เอาจาก image/volume แทน
+media/
+staticfiles/
+
+# ไฟล์พัฒนา/เอกสาร
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+*.log
+Dockerfile
+docker-compose.yml
+README.md

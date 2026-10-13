@@ -1,0 +1,17 @@
+Django==6.0.6
+Pillow==12.3.0
+djangorestframework==3.18.0
+openpyxl==3.1.5
+gunicorn==23.0.0
+asgiref==3.11.1
+sqlparse==0.5.5
+tzdata==2026.2
+django-allauth==65.19.2
+requests==2.34.2
+django-cors-headers==4.7.0
+whitenoise==6.9.0
+qrcode==8.2
+python-dotenv==1.2.4
+reportlab==5.0.1
+psycopg[binary]==3.3.6
+sentry-sdk==2.71.0
