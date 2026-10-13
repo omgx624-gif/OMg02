@@ -180,7 +180,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 # Media files (อัปโหลดรูปภาพ)
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = Path(os.environ.get('DJANGO_MEDIA_ROOT') or (BASE_DIR / 'media'))
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

@@ -11,10 +11,12 @@ env/
 # Django
 *.sqlite3
 *.sqlite3-journal
-media/
 staticfiles/
 .env
 *.env
+media/payment_slips/
+media/**/test*
+
 
 # IDE / OS
 .vscode/

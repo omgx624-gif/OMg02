@@ -1,7 +1,10 @@
 import io
+import os
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import Group, Permission
+
 from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -9,32 +12,56 @@ from PIL import Image, ImageDraw, ImageFont
 
 from myapp.models import Category, Coupon, Ingredient, MenuIngredient, MenuItem, StoreLocation
 
-# (ชื่อเมนู, หมวดหมู่, ราคา, ระดับความเผ็ด, คำอธิบาย, พร้อมขาย)
+# (ชื่อเมนู, หมวดหมู่, ราคา, ระดับความเผ็ด, คำอธิบาย, พร้อมขาย, ไฟล์รูปภาพ)
 SEED_DATA = [
     ('ข้าวผัดกะเพราหมูสับ', 'rice', 50, 2,
-     'ผัดกะเพราพริกสดโขลกเองทุกวัน หมูสับสไลซ์บาง หอมใบกะเพราฉีกขาด เสิร์ฟพร้อมไข่ดาว', True),
+     'ผัดกะเพราพริกสดโขลกเองทุกวัน หมูสับสไลซ์บาง หอมใบกะเพราฉีกขาด เสิร์ฟพร้อมไข่ดาว', True,
+     'menu_images/2026/09/b36f3b07-ae2a-4061-a2ee-ac06cbf0110f.png'),
     ('ข้าวราดแกงเขียวหวานไก่', 'rice', 45, 1,
-     'แกงเขียวหวานกะทิข้นหอมมะกรูด ไก่นุ่ม เพิ่มมะเขือเปราะและใบโหระพา', True),
+     'แกงเขียวหวานกะทิข้นหอมมะกรูด ไก่นุ่ม เพิ่มมะเขือเปราะและใบโหระพา', True,
+     'menu_images/2026/09/90ff02f7-c049-42e2-81ed-ec58f1280545.png'),
     ('ผัดไทยกุ้งสด', 'rice', 70, 1,
-     'เส้นจันทน์เจ้ายืดหยุ่น กุ้งสดตัวโต รสชาติกลมกล่อมตามสูตรดั้งเดิม พร้อมถั่วกลองและมะนาว', True),
+     'เส้นจันทน์เจ้ายืดหยุ่น กุ้งสดตัวโต รสชาติกลมกล่อมตามสูตรดั้งเดิม พร้อมถั่วกลองและมะนาว', True,
+     'menu_images/2026/09/Gemini_Generated_Image_nxifltnxifltnxif.jpg'),
     ('ต้มยำกุ้งน้ำข้น', 'soup', 120, 3,
-     'น้ำซุปกะทิเข้มข้น กุ้งแม่น้ำสด ตะไคร้ ใบมะกรูด รสเปรี้ยวเผ็ดครบรสแบบต้นตำรับ', True),
+     'น้ำซุปกะทิเข้มข้น กุ้งแม่น้ำสด ตะไคร้ ใบมะกรูด รสเปรี้ยวเผ็ดครบรสแบบต้นตำรับ', True,
+     'menu_images/2026/09/0d3a6f15-ff11-426c-a42a-b49b5084d3f4.jpg'),
     ('แกงส้มชะอมไข่', 'soup', 60, 2,
-     'แกงส้มรสจัดเต็ม อ่อมชะอมหอมๆ ผักสดตามฤดูกาล อุ่นๆ ชื่นใจ', False),
+     'แกงส้มรสจัดเต็ม อ่อมชะอมหอมๆ ผักสดตามฤดูกาล อุ่นๆ ชื่นใจ', False,
+     'menu_images/2026/09/6a262ce4-7110-428c-8a34-6c36ea9a4110.jpg'),
     ('ไก่ทอดกรอบเจริญเมือง', 'fried', 55, 0,
-     'ไก่หมักเครื่องเทศสูตรเด็ดทอดร้อนๆ กรอบนอกนุ่มใน ทานคู่ข้าวเหนียวร้อนๆ', True),
+     'ไก่หมักเครื่องเทศสูตรเด็ดทอดร้อนๆ กรอบนอกนุ่มใน ทานคู่ข้าวเหนียวร้อนๆ', True,
+     'menu_images/2026/10/ไกทอดกรอบ_เจรญเมอง.png'),
     ('ปลาเสียบตะไคร้', 'fried', 150, 1,
-     'ปลาสลิดตัวใหญ่เสียบตะไคร้ทอดกรอบทั้งตัว เหยาะน้ำพริกผักชีรสเด็ด', True),
+     'ปลาสลิดตัวใหญ่เสียบตะไคร้ทอดกรอบทั้งตัว เหยาะน้ำพริกผักชีรสเด็ด', True,
+     'menu_images/2026/10/ปลาเสยบตะไครกรอบหอม.png'),
     ('ชาไทยเย็น', 'drink', 25, 0,
-     'ชารสเข้มข้นชงใหม่ทุกแก้ว เติมความหวานด้วยนมข้น แช่เย็นจัด', True),
+     'ชารสเข้มข้นชงใหม่ทุกแก้ว เติมความหวานด้วยนมข้น แช่เย็นจัด', True,
+     'menu_images/2026/09/Gemini_Generated_Image_2rxelg2rxelg2rxe.jpg'),
     ('มะนาวโซดา', 'drink', 30, 0,
-     'มะนาวคั้นสด โซดาแช่เย็นก๊อกแก๊ก สดชื่นดับร้อนได้ทั้งวัน', True),
+     'มะนาวคั้นสด โซดาแช่เย็นก๊อกแก๊ก สดชื่นดับร้อนได้ทั้งวัน', True,
+     'menu_images/2026/09/Gemini_Generated_Image_c7wulzc7wulzc7wu.jpg'),
     ('ข้าวเหนียวมะม่วง', 'dessert', 60, 0,
-     'มะม่วงน้ำดอกไม้สุกหวานฉ่ำ เสิร์ฟกับข้าวเหนียวนึ่งราดกะทิ โรยถั่วทองกรอบ', True),
+     'มะม่วงน้ำดอกไม้สุกหวานฉ่ำ เสิร์ฟกับข้าวเหนียวนึ่งราดกะทิ โรยถั่วทองกรอบ', True,
+     'menu_images/2026/09/Gemini_Generated_Image_c4q70qc4q70qc4q7.jpg'),
     ('วุ้นกะทิเต้าหู้', 'dessert', 35, 0,
-     'วุ้นเดือยทองเนื้อหยุ่น กะทิหวานมัน ทานเย็นๆ ละมุนลิ้น', True),
+     'วุ้นเดือยทองเนื้อหยุ่น กะทิหวานมัน ทานเย็นๆ ละมุนลิ้น', True,
+     'menu_images/2026/09/Gemini_Generated_Image_mdi18kmdi18kmdi1.jpg'),
     ('ขนมครกกะทิ', 'dessert', 40, 0,
-     'ขนมครกแป้งหมี่กรอบนอก ไส้กะทิมะพร้าวอ่อน อบร้อนทุกชุด', False),
+     'ขนมครกแป้งหมี่กรอบนอก ไส้กะทิมะพร้าวอ่อน อบร้อนทุกชุด', False,
+     'menu_images/2026/09/Gemini_Generated_Image_6uux7j6uux7j6uux.jpg'),
+    ('กะเพราไก่', 'rice', 50, 2,
+     'กะเพราไก่เนื้อนุ่ม รสเข้มข้น หอมใบกะเพราสด', True,
+     'menu_images/2026/09/Gemini_Generated_Image_y5cxjvy5cxjvy5cx.jpg'),
+    ('ทอดมันพันตะไคร้', 'fried', 150, 1,
+     'ทอดมันเนื้อเด้งพันก้านตะไคร้หอมกรุ่น ทอดร้อนๆ เสิร์ฟคู่น้ำจิ้มอาจาด', True,
+     'menu_images/2026/09/Gemini_Generated_Image_c9e4fxc9e4fxc9e4.jpg'),
+    ('ไก่ทอดกรอบ', 'fried', 55, 0,
+     'ไก่ทอดชิ้นโต คลุกเคล้าเครื่องปรุงสูตรพิเศษ กรอบอร่อยเคี้ยวเพลิน', True,
+     'menu_images/2026/09/Gemini_Generated_Image_99hv3i99hv3i99hv.jpg'),
+    ('ผัดกะเพราหมูกรอบ', 'rice', 60, 1,
+     'ผัดกะเพราหมูกรอบชิ้นหนา หนังกรอบสะใจ ผัดพริกกระเทียมเข้มข้น', True,
+     'menu_images/2026/09/978d2150-9167-4ecc-89c2-c163cd91e6f2.png'),
 ]
 
 CATEGORY_COLORS = {
@@ -93,6 +120,10 @@ MENU_RECIPES = {
     'ข้าวเหนียวมะม่วง': [('ข้าวเหนียว', 150), ('มะม่วง', 1), ('กะทิ', 50), ('น้ำตาล', 20)],
     'วุ้นกะทิเต้าหู้': [('วุ้น/เดือยทอง', 100), ('กะทิ', 100), ('น้ำตาล', 20)],
     'ขนมครกกะทิ': [('แป้งข้าวจ้าว', 50), ('กะทิ', 50), ('มะพร้าว', 20)],
+    'กะเพราไก่': [('ข้าว', 200), ('ใบกะเพรา', 10), ('ไก่', 80), ('กระเทียม', 5), ('น้ำมัน', 10)],
+    'ทอดมันพันตะไคร้': [('ปลาสลิด', 1), ('ตะไคร้', 2)],
+    'ไก่ทอดกรอบ': [('ไก่', 150), ('แป้งทอด', 50), ('น้ำมัน', 50)],
+    'ผัดกะเพราหมูกรอบ': [('ข้าว', 200), ('หมูสับ', 80), ('ใบกะเพรา', 10)],
 }
 
 # คูปองส่วนลดตัวอย่าง
@@ -226,7 +257,7 @@ class Command(BaseCommand):
         updated_count = 0
         recipe_count = 0
 
-        for i, (name, category, price, spice, description, available) in enumerate(SEED_DATA):
+        for i, (name, category, price, spice, description, available, image_path) in enumerate(SEED_DATA):
             menu, created = MenuItem.objects.update_or_create(
                 name=name,
                 defaults={
@@ -238,6 +269,13 @@ class Command(BaseCommand):
                     'date_added': timezone.localdate() - timedelta(days=i),
                 },
             )
+
+            # เชื่อมโยงรูปภาพที่มีอยู่จริง
+            if image_path:
+                full_image_path = os.path.join(settings.MEDIA_ROOT, image_path)
+                if os.path.exists(full_image_path):
+                    menu.image = image_path
+                    menu.save(update_fields=['image'])
 
             # เชื่อมโยง category_fk กับ Category model
             cat_obj = Category.objects.filter(slug=category).first()
