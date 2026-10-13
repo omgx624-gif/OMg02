@@ -66,8 +66,9 @@ if not ALLOWED_HOSTS:
 _render_host = (os.environ.get('RENDER_EXTERNAL_HOSTNAME') or '').strip()
 if _render_host and _render_host not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(_render_host)
-if _render_host and '.onrender.com' not in ALLOWED_HOSTS:
+if '.onrender.com' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('.onrender.com')
+
 
 
 # Application definition
@@ -283,18 +284,19 @@ if os.environ.get('DJANGO_SECURE', '').lower() in ('1', 'true', 'yes', 'on'):
     SECURE_HSTS_PRELOAD = True
     # หมายเหตุ: SECURE_BROWSER_XSS_FILTER ถูกถอดออก — Django เลิกใช้ฟีเจอร์นี้แล้ว
     # และไม่มีประสิทธิผลในเบราว์เซอร์ยุคใหม่
-    # สร้าง trusted origins จาก ALLOWED_HOSTS ที่เป็นโดเมนจริงเท่านั้น
-    # (กัน '*' / 127.0.0.1 / testserver หลุดเข้ามา)
-    CSRF_TRUSTED_ORIGINS = [
-        f'https://{host}'
-        for host in ALLOWED_HOSTS
-        if host != '*' and not host.startswith('127.') and host != 'testserver'
-        and not host.startswith('.')
-    ]
-    # Render hostname (อาจเป็น wildcard entry) → ใส่ origin จริงด้วย
-    _render_origin = f'https://{_render_host}' if _render_host else ''
-    if _render_origin and _render_origin not in CSRF_TRUSTED_ORIGINS:
-        CSRF_TRUSTED_ORIGINS.append(_render_origin)
+# สร้าง trusted origins จาก ALLOWED_HOSTS ที่เป็นโดเมนจริง
+CSRF_TRUSTED_ORIGINS = [
+    f'https://{host}'
+    for host in ALLOWED_HOSTS
+    if host != '*' and not host.startswith('127.') and host != 'testserver'
+    and not host.startswith('.')
+]
+_render_origin = f'https://{_render_host}' if _render_host else ''
+if _render_origin and _render_origin not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append(_render_origin)
+if 'https://*.onrender.com' not in CSRF_TRUSTED_ORIGINS:
+    CSRF_TRUSTED_ORIGINS.append('https://*.onrender.com')
+
 
 # ---------------------------------------------------------------------------
 # CORS — อนุญาตให้ Frontend อื่นเรียก API ได้ (เฉพาะที่กำหนด)

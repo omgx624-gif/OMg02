@@ -42,7 +42,8 @@ EXPOSE 8000
 # healthcheck ผ่าน /healthz (ตรวจ DB จริง) — ยกเว้น HTTPS redirect ด้วย
 # SECURE_REDIRECT_EXEMPT จึงใช้ HTTP ตรงๆ ได้แม้เปิด DJANGO_SECURE=1
 # ถ้าตอบ 503 (DB ใช้ไม่ได้) urlopen จะ raise → container = unhealthy
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=4)"
 
-CMD ["sh", "-c", "exec gunicorn myproject.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && (python manage.py createcachetable || true) && python manage.py seed_menu && python manage.py init_test_users && (python manage.py create_google_app --domain \"${RENDER_EXTERNAL_HOSTNAME:-localhost}\" || true) && exec gunicorn myproject.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 2 --timeout 120"]
+
